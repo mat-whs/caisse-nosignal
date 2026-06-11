@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span>📊</span> <span>Tableau de bord</span>
                 </a>
                 <a href="${rootPath}caisse/" class="flex items-center space-x-3 p-3 rounded ${isActive('caisse') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                    <span>🛒</span> <span>Caisse (Prod/Récolte)</span>
+                    <span>🛒</span> <span>Caisse</span>
                 </a>
                 <a href="${rootPath}stock/" class="flex items-center space-x-3 p-3 rounded ${isActive('stock') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
                     <span>📦</span> <span>Stock</span>
