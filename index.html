@@ -28,6 +28,15 @@
     </div>
 
 <script>
+    // Vérifier la session dès le chargement de la page d'accueil
+    const savedSession = localStorage.getItem('caisse_session');
+    
+    if (savedSession) {
+        // Si une session existe, on redirige vers le dashboard
+        // Utilisez le chemin complet pour éviter les erreurs de dossier
+        window.location.replace('/caisse-nosignal/dashboard/');
+    }
+    
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
