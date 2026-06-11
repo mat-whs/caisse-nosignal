@@ -27,49 +27,54 @@
         <p id="login-error" class="text-red-500 text-sm text-center mt-4 hidden"></p>
     </div>
 
-    <script>
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+<script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const userInp = document.getElementById('username').value;
+        const passInp = document.getElementById('password').value;
+        const errorTxt = document.getElementById('login-error');
+        
+        errorTxt.classList.add('hidden');
+        
+        try {
+            // Envoi des données avec les termes exacts attendus par Google Apps Script
+            const response = await fetch(CONFIG.API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "login",
+                    identifiant: userInp,
+                    motDePasse: passInp
+                })
+            });
             
-            const userInp = document.getElementById('username').value;
-            const passInp = document.getElementById('password').value;
-            const errorTxt = document.getElementById('login-error');
+            const result = await response.json();
             
-            errorTxt.classList.add('hidden');
-            
-            try {
-                const response = await fetch(CONFIG.API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        action: "connexion",
-                        username: userInp,
-                        password: passInp
-                    })
-                });
+            // Le script renvoie "success: true" ou "success: false"
+            if (result.success) {
+                // Sauvegarde des données de session (ID, identifiant, et IDs d'entreprises)
+                localStorage.setItem('caisse_session', JSON.stringify({
+                    userId: result.id,
+                    username: result.identifiant,
+                    roleId: result.roleId,
+                    permissions: result.permissions,
+                    entreprisesRaw: result.entreprises // Renvoie la chaîne d'IDs (ex: "1, 2")
+                }));
                 
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    // Sauvegarde de la session utilisateur localement
-                    localStorage.setItem('caisse_session', JSON.stringify({
-                        username: userInp,
-                        role: result.role,
-                        entreprises: result.entreprises
-                    }));
-                    
-                    // Redirection vers le dossier dashboard
-                    window.location.replace('./dashboard/');
-                } else {
-                    errorTxt.innerText = result.message;
-                    errorTxt.classList.remove('hidden');
-                }
-                
-            } catch (error) {
-                errorTxt.innerText = "Erreur de communication réseau.";
+                // Redirection vers le tableau de bord
+                window.location.replace('./dashboard/');
+            } else {
+                // Affiche les messages précis du script : "Mot de passe incorrect", "Utilisateur introuvable", etc.
+                errorTxt.innerText = result.message;
                 errorTxt.classList.remove('hidden');
-                console.error(error);
             }
-        });
-    </script>
+            
+        } catch (error) {
+            errorTxt.innerText = "Erreur de communication réseau.";
+            errorTxt.classList.remove('hidden');
+            console.error(error);
+        }
+    });
+</script>
 </body>
 </html>
