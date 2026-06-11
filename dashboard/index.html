@@ -89,9 +89,6 @@
                 try {
                     const response = await fetch(CONFIG.API_URL, {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json" // <--- C'est crucial
-                        },
                         body: JSON.stringify({ action: "getFormData", userId: sessionData.userId })
                     });
                     const result = await response.json();
