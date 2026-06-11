@@ -1,19 +1,64 @@
-<div class="p-8 space-y-8">
-    <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
-        <h3 class="text-xl font-bold mb-4">Gestion Équipe</h3>
-        <button class="bg-blue-600 px-4 py-2 rounded text-sm font-bold">Générer un lien d'invitation</button>
-        <div id="links-container" class="mt-4 text-xs font-mono text-gray-500"></div>
-    </section>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion - Caisse NoSignal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/caisse-nosignal/gateway.js"></script>
+    <script src="/caisse-nosignal/nav.js"></script>
+</head>
+<body class="bg-[#1a1a1a] text-white min-h-screen flex">
 
-    <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
-        <h3 class="text-xl font-bold mb-4">Ajouter au Stock</h3>
-        <input type="text" id="stock-name" placeholder="Nom élément" class="bg-[#222] p-2 rounded">
-        <button onclick="addStock()" class="bg-emerald-600 px-4 py-2 rounded">Ajouter Stock</button>
-    </section>
+    <div id="sidebar-container" class="h-full shrink-0"></div>
 
-    <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
-        <h3 class="text-xl font-bold mb-4">Ajouter Produit en Caisse</h3>
-        <select id="stock-reference" class="bg-[#222] p-2 rounded"></select>
-        <button onclick="addProduct()" class="bg-purple-600 px-4 py-2 rounded">Ajouter à la Caisse</button>
-    </section>
-</div>
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
+            <h2 class="text-xl font-bold">Gestion Administrative</h2>
+            <div class="flex space-x-2 bg-[#222] p-1 rounded-lg">
+                <button onclick="showTab('equipe')" class="px-4 py-1.5 rounded text-sm font-medium hover:bg-[#333]">Équipe</button>
+                <button onclick="showTab('stock')" class="px-4 py-1.5 rounded text-sm font-medium hover:bg-[#333]">Stock</button>
+                <button onclick="showTab('caisse')" class="px-4 py-1.5 rounded text-sm font-medium hover:bg-[#333]">Caisse</button>
+            </div>
+        </header>
+
+        <div class="p-8 overflow-y-auto">
+            <div id="tab-equipe" class="tab-content space-y-6">
+                <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
+                    <h3 class="text-lg font-bold mb-4">Gestion des Employés</h3>
+                    <button class="bg-blue-600 px-4 py-2 rounded text-sm font-bold">Générer lien d'invitation unique</button>
+                    <div id="links-container" class="mt-4 p-3 bg-[#161616] rounded border border-[#333] text-xs font-mono text-gray-400">Aucun lien généré.</div>
+                </section>
+            </div>
+
+            <div id="tab-stock" class="tab-content hidden space-y-6">
+                <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
+                    <h3 class="text-lg font-bold mb-4">Ajouter un article au Stock</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" placeholder="Nom de l'élément" class="bg-[#222] border border-[#333] p-2 rounded">
+                        <input type="number" placeholder="Quantité initiale" class="bg-[#222] border border-[#333] p-2 rounded">
+                    </div>
+                    <button class="mt-4 bg-emerald-700 px-6 py-2 rounded font-bold">Ajouter au Stock</button>
+                </section>
+            </div>
+
+            <div id="tab-caisse" class="tab-content hidden space-y-6">
+                <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
+                    <h3 class="text-lg font-bold mb-4">Ajouter un produit en Caisse</h3>
+                    <select class="w-full bg-[#222] border border-[#333] p-2 rounded mb-4">
+                        <option>Sélectionner un élément du stock...</option>
+                    </select>
+                    <button class="bg-purple-700 px-6 py-2 rounded font-bold">Ajouter à la Caisse</button>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
