@@ -51,21 +51,40 @@
         }
 
         // Logique génération lien
-        function genererLien() {
-            const nom = document.getElementById('emp-name').value;
-            if (!nom) {
-                alert("Veuillez saisir le nom et prénom.");
-                return;
-            }
-            
-            // Simulation de génération - Ici vous appellerez votre API
+async function genererLien() {
+    const nom = document.getElementById('emp-name').value;
+    if (!nom) {
+        alert("Veuillez saisir le nom et prénom.");
+        return;
+    }
+
+    // Appel vers Google Apps Script
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: "POST",
+            body: JSON.stringify({ 
+                action: "genererInvitation", 
+                nom: nom 
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
             const container = document.getElementById('links-container');
             const output = document.getElementById('link-output');
-            const token = Math.random().toString(36).substring(7); // Token fictif
             
-            output.innerText = `https://mat-whs.github.io/caisse-nosignal/setup?token=${token}&nom=${encodeURIComponent(nom)}`;
+            // On utilise le token reçu du serveur
+            output.innerText = `https://mat-whs.github.io/caisse-nosignal/setup?token=${result.token}&nom=${encodeURIComponent(nom)}`;
             container.classList.remove('hidden');
+        } else {
+            alert("Erreur lors de la génération : " + result.message);
         }
+    } catch (error) {
+        console.error("Erreur API :", error);
+        alert("Impossible de contacter le serveur.");
+    }
+}
     </script>
 </body>
 </html>
