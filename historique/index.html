@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique - Caisse NoSignal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/caisse-nosignal/gateway.js"></script>
+    <script src="/caisse-nosignal/nav.js"></script>
+</head>
+<body class="bg-[#1a1a1a] text-white min-h-screen flex">
+
+    <div id="sidebar-container" class="h-full shrink-0"></div>
+
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
+            <h2 class="text-xl font-bold tracking-wide">Historique des transactions</h2>
+            <div class="flex items-center space-x-4">
+                <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active</span>
+                <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
+                    <option value="">Chargement...</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="flex-1 p-8 overflow-y-auto">
+            <div class="bg-[#111] rounded-xl border border-[#222] overflow-hidden">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-[#161616] text-gray-400 uppercase text-xs">
+                        <tr>
+                            <th class="p-4">Date</th>
+                            <th class="p-4">Utilisateur</th>
+                            <th class="p-4">Action</th>
+                            <th class="p-4">Élément</th>
+                            <th class="p-4 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="historique.js"></script>
+</body>
+</html>
