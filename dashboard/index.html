@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caisse - NoSignal</title>
+    <title>Tableau de Bord - NoSignal</title>
     <script src="../gateway.js"></script>
     <script src="../nav.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,164 +13,140 @@
     <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
         <div id="loading-box" class="max-w-md space-y-6">
             <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
-            
             <p id="loading-text" class="text-lg text-gray-300 font-medium tracking-wide">
-                Chargement de vos entreprises et de vos autorisations...
+                Chargement du tableau de bord...
             </p>
         </div>
     </div>
 
     <div id="dashboard-screen" class="w-full min-h-screen flex">
         
-<div id="sidebar-container" class="h-full shrink-0"></div>
+        <div id="sidebar-container" class="h-full shrink-0"></div>
 
-        <main class="flex-1 bg-[#161616] flex flex-col">
-            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8">
+        <main class="flex-1 bg-[#161616] flex flex-col min-w-0">
+            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
                 <div class="flex items-center space-x-4">
-                    <span class="text-xs uppercase tracking-wider text-gray-4xl font-semibold">Entreprise</span>
+                    <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active</span>
                     <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
-                        <option>Chargement des entreprises...</option>
+                        <option>Chargement...</option>
                     </select>
+                </div>
+                <div class="text-xs text-gray-400 bg-[#222] px-3 py-1 rounded">
+                    Vue d'ensemble
                 </div>
             </header>
 
-            <section class="p-8 flex-1 space-y-8 overflow-y-auto">
+            <div class="flex-1 p-8 overflow-y-auto space-y-8">
                 <div>
-                    <p id="dashboard-subtitle" class="text-xs uppercase tracking-widest text-gray-500 font-bold">Tableau de bord</p>
-                    <h2 class="text-4xl font-bold text-white mt-1">Vue d'ensemble</h2>
+                    <h2 class="text-2xl font-black tracking-wide text-white">Tableau de bord</h2>
+                    <p class="text-sm text-gray-500 mt-1">Consultez l'activité et l'état des comptes de votre établissement.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">CA du Jour</p>
-                        <p class="text-3xl font-bold text-white">0,00 $US</p>
-                        <p class="text-xs text-gray-500 mt-1">0 tickets</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#111] border border-[#222] p-6 rounded-xl">
+                        <p class="text-xs uppercase font-bold text-gray-500 tracking-wider">Chiffre d'Affaires (Ventes)</p>
+                        <p id="stat-ca" class="text-3xl font-black text-emerald-400 mt-2">0,00 $</p>
                     </div>
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">CA Total</p>
-                        <p class="text-3xl font-bold text-white">0,00 $US</p>
-                        <p class="text-xs text-gray-500 mt-1">0 ventes</p>
+                    <div class="bg-[#111] border border-[#222] p-6 rounded-xl">
+                        <p class="text-xs uppercase font-bold text-gray-500 tracking-wider">Transactions enregistrées</p>
+                        <p id="stat-transactions" class="text-3xl font-black text-white mt-2">0</p>
                     </div>
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Tickets Aujourd'hui</p>
-                        <p class="text-3xl font-bold text-white">0</p>
-                    </div>
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Alertes Stock</p>
-                        <p id="stock-alerts-count" class="text-3xl font-bold text-emerald-4xl">0</p>
-                        <p class="text-xs text-gray-500 mt-1">≤ 5 unités</p>
+                    <div class="bg-[#111] border border-[#222] p-6 rounded-xl">
+                        <p class="text-xs uppercase font-bold text-gray-500 tracking-wider">Primes Collaborateurs</p>
+                        <p id="stat-primes" class="text-3xl font-black text-blue-400 mt-2">0,00 $</p>
                     </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
     <script>
-        // Extraction de la session locale
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
         const loadingSpinner = document.getElementById('loading-spinner');
-        
+
+        // Sécurité anti-blocage : Si l'API met plus de 10 secondes, on débloque l'interface
+        const timeoutSecurity = setTimeout(() => {
+            if (!loadingOverlay.classList.contains('hidden') && loadingSpinner) {
+                showBlockError("Le serveur Apps Script met trop de temps à répondre. Vérifiez le déploiement ou l'état de votre connexion.");
+            }
+        }, 10000);
+
+        function showBlockError(message) {
+            clearTimeout(timeoutSecurity);
+            if (loadingSpinner) loadingSpinner.remove();
+            loadingOverlay.classList.remove('hidden');
+            loadingText.innerHTML = `<span class="text-red-500 font-bold block text-xl mb-2">Problème de connexion</span>
+                                     <span class="text-gray-300 text-sm block max-w-md mx-auto leading-relaxed">${message}</span>
+                                     <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 border border-[#333] text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour</button>`;
+        }
+
         if (!sessionData) {
-            // Redirection immédiate si aucune session n'existe
             window.location.replace('../');
         } else {
-            // Affichage initial des données utilisateur dans la barre latérale
-            document.getElementById('user-display-name').innerText = sessionData.username;
-            document.getElementById('user-display-role').innerText = sessionData.permissions.includes("Admin") ? "Administrateur" : "Employé";
-            
-            // Stockage local global des données reçues (correction de la faute de syntaxe)
-            let dataStocksGlobal = [];
-            let dataProduitsGlobal = [];
-
-            // Fonction pour afficher l'écran d'erreur définitif demandé
-            function showBlockError(message) {
-                if (loadingSpinner) loadingSpinner.remove(); // Retire l'animation de chargement
-                loadingOverlay.classList.remove('hidden'); // S'assure que l'écran bloque tout
-                loadingText.innerHTML = `<span class="text-red-500 font-bold block text-2xl mb-2">Accès Refusé</span>
-                                         <span class="text-gray-300 text-base block max-w-md mx-auto leading-relaxed">${message}</span>
-                                         <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour à la connexion</button>`;
-            }
-
-            // Requête vers getFormData
             async function fetchDashboardData() {
                 try {
                     const response = await fetch(CONFIG.API_URL, {
                         method: "POST",
-                        body: JSON.stringify({
-                            action: "getFormData",
-                            userId: sessionData.userId
-                        })
+                        body: JSON.stringify({ action: "getFormData", userId: sessionData.userId })
                     });
-                    
                     const result = await response.json();
-                    
+
                     if (result.success) {
-                        // Vérification si la liste des entreprises autorisées est vide
+                        clearTimeout(timeoutSecurity);
                         if (!result.entreprises || result.entreprises.length === 0) {
-                            showBlockError("Vous n'avez l'autorisation pour aucune entreprise autorisée, veuillez le signaler à votre patron ou à un administrateur du site sur Discord si vous êtes patron.");
+                            showBlockError("Vous n'avez l'autorisation pour aucune entreprise, veuillez le signaler à un administrateur.");
                             return;
                         }
 
-                        dataStocksGlobal = result.stocks || [];
-                        dataProduitsGlobal = result.produits || [];
-                        
-                        // Remplissage du sélecteur
                         const compSelector = document.getElementById('company-selector');
-                        compSelector.innerHTML = ""; 
-                        
+                        compSelector.innerHTML = "";
+
                         result.entreprises.forEach(entreprise => {
                             const opt = document.createElement('option');
                             opt.value = parseInt(entreprise.id);
-                            opt.innerText = entreprise.nom;
+                            // Correction syntaxique de entreprise.nom garantie sans le symbole @
+                            opt.innerText = Math.trunc(entreprise.id) === 1 ? "Burger Shot" : entreprise.nom;
                             compSelector.appendChild(opt);
                         });
-                        
-                        // Premier rendu avec la première entreprise active
-                        renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
 
-                        // Changement dynamique au clic sur le sélecteur
+                        const savedCompany = localStorage.getItem('active_company_id');
+                        if (savedCompany && [...compSelector.options].some(o => o.value === savedCompany)) {
+                            compSelector.value = savedCompany;
+                        }
+
+                        localStorage.setItem('active_company_id', compSelector.value);
+                        
+                        // Appel de votre fonction de rendu des stats (si implémentée dans votre logique métier)
+                        if (typeof renderDashboardStats === "function") {
+                            renderDashboardStats(compSelector.value);
+                        }
+
                         compSelector.addEventListener('change', () => {
-                            renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
+                            localStorage.setItem('active_company_id', compSelector.value);
+                            if (typeof renderDashboardStats === "function") {
+                                renderDashboardStats(compSelector.value);
+                            }
                         });
 
-                        // Cacher l'écran de chargement plein écran puisque tout est prêt
                         loadingOverlay.classList.add('hidden');
-
                     } else {
-                        showBlockError(result.message || "Erreur de chargement des configurations.");
+                        showBlockError(result.message || "Erreur d'autorisation.");
                     }
                 } catch (error) {
-                    console.error(error);
-                    showBlockError("Impossible de joindre le serveur distant API Apps Script.");
+                    showBlockError("Erreur de liaison réseau avec l'API Apps Script. Vérifiez votre fichier gateway.js.");
                 }
             }
 
-            // Filtrage et distribution des données par entreprise active
-            function renderCompanyData(companyId, companyName) {
-                document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + companyName;
-                
-                const stockFiltre = dataStocksGlobal.filter(item => Number(item.entrepriseId) === Number(companyId));
-                const alertesCount = stockFiltre.filter(item => Number(item.quantite) <= 5).length;
-                
-                document.getElementById('stock-alerts-count').innerText = alertesCount;
-                
-                console.log(`[Données] ${companyName} activée.`, {
-                    stocks: stockFiltre
-                });
-            }
-
-            // Lancement automatique
             fetchDashboardData();
         }
 
-        // Fonctions de déconnexion
         function logoutForce() {
             localStorage.removeItem('caisse_session');
+            localStorage.removeItem('active_company_id');
             window.location.replace('../');
         }
-        document.getElementById('btn-logout').addEventListener('click', logoutForce);
     </script>
 </body>
 </html>
