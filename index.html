@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caisse.NoSignal</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="config.js"></script>
+    <script src="gateway.js"></script>
 </head>
 <body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen flex items-center justify-center">
 
@@ -31,79 +27,7 @@
         <p id="login-error" class="text-red-500 text-sm text-center mt-4 hidden"></p>
     </div>
 
-    <div id="dashboard-screen" class="w-full min-h-screen flex hidden animate-fade-in">
-        
-        <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between">
-            <div>
-                <div class="p-6 border-b border-[#222]">
-                    <span class="text-xl font-bold tracking-wider text-white">Caisse.<span class="font-light">NoSignal</span></span>
-                </div>
-                <nav class="p-4 space-y-2">
-                    <a href="#" class="flex items-center space-x-3 bg-[#222] text-white p-3 rounded font-medium transition">
-                        <span>📊</span> <span>Tableau de bord</span>
-                    </a>
-                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
-                        <span>🛒</span> <span>Caisse</span>
-                    </a>
-                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
-                        <span>📦</span> <span>Stock</span>
-                    </a>
-                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
-                        <span>⏳</span> <span>Historique</span>
-                    </a>
-                </nav>
-            </div>
-            <div class="p-4 border-t border-[#222] flex items-center justify-between">
-                <div>
-                    <p id="user-display-name" class="font-bold text-white text-sm">Nom</p>
-                    <p id="user-display-role" class="text-xs text-gray-500 uppercase tracking-wider">Rôle</p>
-                </div>
-                <button id="btn-logout" class="text-xs bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
-            </div>
-        </aside>
-
-        <main class="flex-1 bg-[#161616] flex flex-col">
-            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8">
-                <div class="flex items-center space-x-4">
-                    <span class="text-xs uppercase tracking-wider text-gray-4xl font-semibold">Entreprise</span>
-                    <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
-                        </select>
-                </div>
-            </header>
-
-            <section class="p-8 flex-1 space-y-8 overflow-y-auto">
-                <div>
-                    <p id="dashboard-subtitle" class="text-xs uppercase tracking-widest text-gray-500 font-bold">Tableau de bord</p>
-                    <h2 class="text-4xl font-bold text-white mt-1">Vue d'ensemble</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">CA du Jour</p>
-                        <p class="text-3xl font-bold text-white">0,00 $US</p>
-                        <p class="text-xs text-gray-500 mt-1">0 tickets</p>
-                    </div>
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">CA Total</p>
-                        <p class="text-3xl font-bold text-white">0,00 $US</p>
-                        <p class="text-xs text-gray-500 mt-1">0 ventes</p>
-                    </div>
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Tickets Aujourd'hui</p>
-                        <p class="text-3xl font-bold text-white">0</p>
-                    </div>
-                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
-                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Alertes Stock</p>
-                        <p class="text-3xl font-bold text-emerald-4xl">0</p>
-                        <p class="text-xs text-gray-500 mt-1">≤ 5 unités</p>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
     <script>
-        // Gestion de la soumission du formulaire de connexion
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -114,7 +38,6 @@
             errorTxt.classList.add('hidden');
             
             try {
-                // Envoi des identifiants à l'API Google Apps Script
                 const response = await fetch(CONFIG.API_URL, {
                     method: "POST",
                     body: JSON.stringify({
@@ -127,36 +50,15 @@
                 const result = await response.json();
                 
                 if (result.status === "success") {
-                    // Masquer l'écran de connexion et afficher le tableau de bord
-                    document.body.classList.remove('items-center', 'justify-center');
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('dashboard-screen').classList.remove('hidden');
+                    // Sauvegarde de la session utilisateur localement
+                    localStorage.setItem('caisse_session', JSON.stringify({
+                        username: userInp,
+                        role: result.role,
+                        entreprises: result.entreprises
+                    }));
                     
-                    // Configurer les informations de l'utilisateur connecté
-                    document.getElementById('user-display-name').innerText = userInp;
-                    document.getElementById('user-display-role').innerText = result.role;
-                    
-                    // Remplir dynamiquement le sélecteur d'entreprises autorisées
-                    const compSelector = document.getElementById('company-selector');
-                    compSelector.innerHTML = ""; // Vider le sélecteur
-                    
-                    // Découper la liste des entreprises reçues (ex: "Burger Shot, Vigneron")
-                    const listeEntreprises = result.entreprises.split(',').map(item => item.trim());
-                    listeEntreprises.forEach(entreprise => {
-                        const opt = document.createElement('option');
-                        opt.value = window.crypto.randomUUID ? window.crypto.randomUUID() : entreprise; // Valeur propre
-                        opt.innerText = entreprise;
-                        compSelector.appendChild(opt);
-                    });
-                    
-                    // Mettre à jour le sous-titre de la vue d'ensemble avec l'entreprise active
-                    document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + compSelector.options[compSelector.selectedIndex].text;
-                    
-                    // Événement en cas de changement d'entreprise dans la liste déroulante
-                    compSelector.addEventListener('change', () => {
-                        document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + compSelector.options[compSelector.selectedIndex].text;
-                    });
-                    
+                    // Redirection vers le dossier dashboard
+                    window.location.replace('./dashboard/');
                 } else {
                     errorTxt.innerText = result.message;
                     errorTxt.classList.remove('hidden');
@@ -167,11 +69,6 @@
                 errorTxt.classList.remove('hidden');
                 console.error(error);
             }
-        });
-
-        // Gestion du bouton de déconnexion
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            window.location.reload(); // Recharger la page réinitialise l'état proprement
         });
     </script>
 </body>
