@@ -81,17 +81,25 @@
         let cart = [];
         let activeCategory = "TOUT";
 
+        // Sécurité anti-blocage : Si l'API met plus de 10 secondes, on affiche un bouton d'action
+        const timeoutSecurity = setTimeout(() => {
+            if (!loadingOverlay.classList.contains('hidden') && loadingSpinner) {
+                showBlockError("Le serveur Apps Script met du temps à répondre. Vérifiez que votre script Google Sheets est bien publié ou essayez à nouveau.");
+            }
+        }, 10000);
+
+        function showBlockError(message) {
+            clearTimeout(timeoutSecurity);
+            if (loadingSpinner) loadingSpinner.remove();
+            loadingOverlay.classList.remove('hidden');
+            loadingText.innerHTML = `<span class="text-red-500 font-bold block text-xl mb-2">Problème de connexion</span>
+                                     <span class="text-gray-300 text-sm block max-w-md mx-auto leading-relaxed">${message}</span>
+                                     <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 border border-[#333] text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour</button>`;
+        }
+
         if (!sessionData) {
             window.location.replace('../');
         } else {
-            function showBlockError(message) {
-                if (loadingSpinner) loadingSpinner.remove();
-                loadingOverlay.classList.remove('hidden');
-                loadingText.innerHTML = `<span class="text-red-500 font-bold block text-2xl mb-2">Accès Refusé</span>
-                                         <span class="text-gray-300 text-base block max-w-md mx-auto leading-relaxed">${message}</span>
-                                         <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour</button>`;
-            }
-
             async function fetchCaisseData() {
                 try {
                     const response = await fetch(CONFIG.API_URL, {
@@ -101,8 +109,9 @@
                     const result = await response.json();
                     
                     if (result.success) {
+                        clearTimeout(timeoutSecurity);
                         if (!result.entreprises || result.entreprises.length === 0) {
-                            showBlockError("Vous n'avez l'autorisation pour aucune entreprise autorisée, veuillez le signaler à votre patron ou à un administrateur.");
+                            showBlockError("Vous n'avez l'autorisation pour aucune entreprise, veuillez le signaler à un administrateur.");
                             return;
                         }
 
@@ -113,7 +122,8 @@
                         result.entreprises.forEach(entreprise => {
                             const opt = document.createElement('option');
                             opt.value = parseInt(entreprise.id);
-                            opt.innerText = Math.trunc(entreprise.id) === 1 ? "Burger Shot" : @entreprise.nom;
+                            // CORRECTION DE LA SYNTAXE ICI (Suppression du @ erroné)
+                            opt.innerText = Math.trunc(entreprise.id) === 1 ? "Burger Shot" : entreprise.nom;
                             compSelector.appendChild(opt);
                         });
 
@@ -137,7 +147,7 @@
                         showBlockError(result.message || "Erreur d'autorisation.");
                     }
                 } catch (error) {
-                    showBlockError("Erreur de liaison réseau avec l'API Apps Script.");
+                    showBlockError("Erreur de liaison réseau avec l'API Apps Script. Vérifiez votre fichier gateway.js.");
                 }
             }
 
@@ -212,7 +222,6 @@
             updateCartUI();
         }
 
-        // Ajustement des quantités (+ / -)
         function updateQuantity(id, amount) {
             const item = cart.find(i => i.id === id);
             if (!item) return;
@@ -227,6 +236,10 @@
             cart = [];
             updateCartUI();
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') clearCart();
+        });
 
         function updateCartUI() {
             const container = document.getElementById('cart-items');
