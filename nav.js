@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div class="p-4 border-t border-[#222] flex items-center justify-between">
             <div class="min-w-0 flex-1 pr-2">
-                <p class="font-bold text-white text-sm truncate">${sessionData.identifiant}</p>
+                <p class="font-bold text-white text-sm truncate">${sessionData.username}</p>
                 <p class="text-[10px] text-gray-500 uppercase tracking-wider">${roleLabel}</p>
             </div>
             <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
