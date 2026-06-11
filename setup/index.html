@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuration de votre compte - Caisse NoSignal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#1a1a1a] text-white flex items-center justify-center min-h-screen">
+
+    <div class="bg-[#242424] p-8 rounded-lg shadow-xl w-full max-w-sm border border-[#333]">
+        <h1 class="text-xl font-bold mb-6">Initialisation du compte</h1>
+        <p class="text-sm text-gray-400 mb-6" id="welcome-msg">Configuration en cours...</p>
+        
+        <input type="password" id="new-password" placeholder="Nouveau mot de passe" class="w-full bg-[#161616] border border-[#444] p-3 rounded mb-4">
+        <button onclick="savePassword()" class="w-full bg-white text-black font-bold p-3 rounded">Valider</button>
+    </div>
+
+    <script>
+        // 1. Récupération des infos du lien (token et nom)
+        const urlParams = new URLSearchParams(window.location.search);
+        const nom = urlParams.get('nom');
+        document.getElementById('welcome-msg').innerText = `Bonjour ${nom}, définissez votre mot de passe pour accéder à Caisse.NoSignal`;
+
+        function savePassword() {
+            const pass = document.getElementById('new-password').value;
+            // 2. Ici, vous feriez un fetch vers votre API Google Apps Script
+            // pour mettre à jour le mot de passe dans le CSV
+            alert("Compte configuré !");
+        }
+    </script>
+</body>
+</html>
