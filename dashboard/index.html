@@ -1,11 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caisse - NoSignal</title>
     <script src="../gateway.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen">
+<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
 
-    <div id="dashboard-screen" class="w-full min-h-screen flex animate-fade-in">
+    <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div id="loading-box" class="max-w-md space-y-6">
+            <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
+            
+            <p id="loading-text" class="text-lg text-gray-300 font-medium tracking-wide">
+                Chargement de vos entreprises et de vos autorisations...
+            </p>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="w-full min-h-screen flex">
         
         <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between">
             <div>
@@ -16,13 +30,13 @@
                     <a href="#" class="flex items-center space-x-3 bg-[#222] text-white p-3 rounded font-medium transition">
                         <span>📊</span> <span>Tableau de bord</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
+                    <a href="#" class="flex items-center space-x-3 text-gray-400 p-3 rounded hover:bg-[#222] hover:text-white transition">
                         <span>🛒</span> <span>Caisse</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
+                    <a href="#" class="flex items-center space-x-3 text-gray-400 p-3 rounded hover:bg-[#222] hover:text-white transition">
                         <span>📦</span> <span>Stock</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
+                    <a href="#" class="flex items-center space-x-3 text-gray-400 p-3 rounded hover:bg-[#222] hover:text-white transition">
                         <span>⏳</span> <span>Historique</span>
                     </a>
                 </nav>
@@ -78,18 +92,34 @@
     </div>
 
     <script>
-        // 1. Extraction de la session locale initialisée à la connexion
+        // Extraction de la session locale
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
         
-        if (sessionData) {
+        if (!sessionData) {
+            // Redirection immédiate si aucune session n'existe
+            window.location.replace('../');
+        } else {
+            // Affichage initial des données utilisateur dans la barre latérale
             document.getElementById('user-display-name').innerText = sessionData.username;
             document.getElementById('user-display-role').innerText = sessionData.permissions.includes("Admin") ? "Administrateur" : "Employé";
             
-            // Stockage local global des données reçues pour éviter les appels réseaux répétitifs
-            let dataStocks Global = [];
+            // Stockage local global des données reçues (correction de la faute de syntaxe)
+            let dataStocksGlobal = [];
             let dataProduitsGlobal = [];
 
-            // 2. Requête API synchrone vers getFormData
+            // Fonction pour afficher l'écran d'erreur définitif demandé
+            function showBlockError(message) {
+                if (loadingSpinner) loadingSpinner.remove(); // Retire l'animation de chargement
+                loadingOverlay.classList.remove('hidden'); // S'assure que l'écran bloque tout
+                loadingText.innerHTML = `<span class="text-red-500 font-bold block text-2xl mb-2">Accès Refusé</span>
+                                         <span class="text-gray-300 text-base block max-w-md mx-auto leading-relaxed">${message}</span>
+                                         <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour à la connexion</button>`;
+            }
+
+            // Requête vers getFormData
             async function fetchDashboardData() {
                 try {
                     const response = await fetch(CONFIG.API_URL, {
@@ -103,70 +133,70 @@
                     const result = await response.json();
                     
                     if (result.success) {
-                        dataStocksGlobal = result.stocks;
-                        dataProduitsGlobal = result.produits;
+                        // Vérification si la liste des entreprises autorisées est vide
+                        if (!result.entreprises || result.entreprises.length === 0) {
+                            showBlockError("Vous n'avez l'autorisation pour aucune entreprise autorisée, veuillez le signaler à votre patron ou à un administrateur du site sur Discord si vous êtes patron.");
+                            return;
+                        }
+
+                        dataStocksGlobal = result.stocks || [];
+                        dataProduitsGlobal = result.produits || [];
                         
-                        // Remplissage du sélecteur d'entreprises avec les vrais noms (Burger Shot, Vigneron...)
+                        // Remplissage du sélecteur
                         const compSelector = document.getElementById('company-selector');
                         compSelector.innerHTML = ""; 
                         
-                        if (result.entreprises && result.entreprises.length > 0) {
-                            result.entreprises.forEach(entreprise => {
-                                const opt = document.createElement('option');
-                                opt.value = entreprise.id; // ID numérique (ex: 1)
-                                opt.innerText = entreprise.nom; // Nom textuel (ex: "Burger Shot")
-                                compSelector.appendChild(opt);
-                            });
-                            
-                            // Premier rendu de l’interface avec la première entreprise de la liste
-                            renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
-                        } else {
-                            compSelector.innerHTML = "<option value=''>Aucune entreprise assignée</option>";
-                        }
+                        result.entreprises.forEach(entreprise => {
+                            const opt = document.createElement('option');
+                            opt.value = parseInt(entreprise.id);
+                            opt.innerText = entreprise.nom;
+                            compSelector.appendChild(opt);
+                        });
+                        
+                        // Premier rendu avec la première entreprise active
+                        renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
 
-                        // Écouteur d'événement sur le changement d'entreprise active
+                        // Changement dynamique au clic sur le sélecteur
                         compSelector.addEventListener('change', () => {
                             renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
                         });
 
+                        // Cacher l'écran de chargement plein écran puisque tout est prêt
+                        loadingOverlay.classList.add('hidden');
+
                     } else {
-                        console.error("Erreur d'extraction : ", result.message);
+                        showBlockError(result.message || "Erreur de chargement des configurations.");
                     }
                 } catch (error) {
-                    console.error("Erreur de communication API : ", error);
+                    console.error(error);
+                    showBlockError("Impossible de joindre le serveur distant API Apps Script.");
                 }
             }
 
-            // 3. Traitement et filtrage dynamique des données de l'entreprise sélectionnée
+            // Filtrage et distribution des données par entreprise active
             function renderCompanyData(companyId, companyName) {
-                // Mise à jour du sous-titre
                 document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + companyName;
                 
-                // Filtrage des stocks appartenant uniquement à l'entreprise sélectionnée
                 const stockFiltre = dataStocksGlobal.filter(item => Number(item.entrepriseId) === Number(companyId));
-                // Filtrage des produits appartenant uniquement à l'entreprise sélectionnée
-                const produitsFiltre = dataProduitsGlobal.filter(item => Number(item.entrepriseId) === Number(companyId));
-                
-                // Calcul automatique des alertes de stock (Quantité inférieure ou égale à 5)
                 const alertesCount = stockFiltre.filter(item => Number(item.quantite) <= 5).length;
+                
                 document.getElementById('stock-alerts-count').innerText = alertesCount;
                 
-                // Les variables stockFiltre et produitsFiltre sont prêtes pour alimenter vos futurs modules de caisse et inventaires
-                console.log(`[Données chargées] Entreprise : ${companyName} (ID: ${companyId})`, {
-                    stocks: stockFiltre,
-                    produits: produitsFiltre
+                console.log(`[Données] ${companyName} activée.`, {
+                    stocks: stockFiltre
                 });
             }
 
-            // Lancement automatique du chargement des données métier au chargement de la page
+            // Lancement automatique
             fetchDashboardData();
         }
 
-        // Gestion propre de la déconnexion
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            localStorage.removeItem('caisse_session'); 
-            window.location.replace('../'); 
-        });
+        // Fonctions de déconnexion
+        function logoutForce() {
+            localStorage.removeItem('caisse_session');
+            window.location.replace('../');
+        }
+        document.getElementById('btn-logout').addEventListener('click', logoutForce);
     </script>
 </body>
 </html>
