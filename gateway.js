@@ -13,9 +13,12 @@
         return;
     } 
     
-    if (!isDashboardPage && session) {
-        // Déjà connecté et tente d'aller sur l'index -> Redirection vers le dashboard
-        window.location.replace(relPath + 'dashboard/');
+    // Redirection ciblée vers le dashboard uniquement depuis la racine
+    const isRootPage = window.location.pathname === '/caisse-nosignal/' || window.location.pathname === '/caisse-nosignal/index.html';
+    
+    if (isRootPage && session) {
+        // Redirige vers le dashboard uniquement si on est sur la page de connexion
+        window.location.replace(rootPath + 'dashboard/');
         return;
     }
 
