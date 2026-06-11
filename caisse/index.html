@@ -98,11 +98,14 @@
                     method: "POST",
                     body: JSON.stringify({ action: "getFormData", userId: sessionData.userId })
                 });
-                const result = await response.json();
+                    
+                const textResponse = await response.text(); 
+                console.log("Réponse brute du serveur :", textResponse); // <--- LOG CRUCIAL
+        
+                const result = JSON.parse(textResponse);
                 
-                // --- MODIFICATION : Plus de blocage strict ---
-                // On affiche un avertissement console au lieu d'une erreur bloquante
                 if (!result.success) {
+                    console.error("Erreur logique renvoyée par le serveur :", result.message);
                     showBlockError("Erreur serveur : " + result.message);
                     return;
                 }
