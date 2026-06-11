@@ -29,7 +29,7 @@
             </div>
             <div class="p-4 border-t border-[#222] flex items-center justify-between">
                 <div>
-                    <p id="user-display-name" class="font-bold text-white text-sm">Nom</p>
+                    <p id="user-display-name" class="font-bold text-white text-sm">Chargement...</p>
                     <p id="user-display-role" class="text-xs text-gray-500 uppercase tracking-wider">Rôle</p>
                 </div>
                 <button id="btn-logout" class="text-xs bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
@@ -41,6 +41,7 @@
                 <div class="flex items-center space-x-4">
                     <span class="text-xs uppercase tracking-wider text-gray-4xl font-semibold">Entreprise</span>
                     <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
+                        <option>Chargement des entreprises...</option>
                     </select>
                 </div>
             </header>
@@ -68,7 +69,7 @@
                     </div>
                     <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
                         <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Alertes Stock</p>
-                        <p class="text-3xl font-bold text-emerald-4xl">0</p>
+                        <p id="stock-alerts-count" class="text-3xl font-bold text-emerald-4xl">0</p>
                         <p class="text-xs text-gray-500 mt-1">≤ 5 unités</p>
                     </div>
                 </div>
@@ -77,35 +78,94 @@
     </div>
 
     <script>
-        // Extraction et affichage des données de session sauvegardées au login
+        // 1. Extraction de la session locale initialisée à la connexion
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
         
         if (sessionData) {
             document.getElementById('user-display-name').innerText = sessionData.username;
-            document.getElementById('user-display-role').innerText = sessionData.role;
+            document.getElementById('user-display-role').innerText = sessionData.permissions.includes("Admin") ? "Administrateur" : "Employé";
             
-            const compSelector = document.getElementById('company-selector');
-            compSelector.innerHTML = ""; 
-            
-            const listeEntreprises = sessionData.entreprises.split(',').map(item => item.trim());
-            listeEntreprises.forEach(entreprise => {
-                const opt = document.createElement('option');
-                opt.value = window.crypto.randomUUID ? window.crypto.randomUUID() : entreprise;
-                opt.innerText = entreprise;
-                compSelector.appendChild(opt);
-            });
-            
-            document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + compSelector.options[compSelector.selectedIndex].text;
-            
-            compSelector.addEventListener('change', () => {
-                document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + compSelector.options[compSelector.selectedIndex].text;
-            });
+            // Stockage local global des données reçues pour éviter les appels réseaux répétitifs
+            let dataStocks Global = [];
+            let dataProduitsGlobal = [];
+
+            // 2. Requête API synchrone vers getFormData
+            async function fetchDashboardData() {
+                try {
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            action: "getFormData",
+                            userId: sessionData.userId
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        dataStocksGlobal = result.stocks;
+                        dataProduitsGlobal = result.produits;
+                        
+                        // Remplissage du sélecteur d'entreprises avec les vrais noms (Burger Shot, Vigneron...)
+                        const compSelector = document.getElementById('company-selector');
+                        compSelector.innerHTML = ""; 
+                        
+                        if (result.entreprises && result.entreprises.length > 0) {
+                            result.entreprises.forEach(entreprise => {
+                                const opt = document.createElement('option');
+                                opt.value = entreprise.id; // ID numérique (ex: 1)
+                                opt.innerText = entreprise.nom; // Nom textuel (ex: "Burger Shot")
+                                compSelector.appendChild(opt);
+                            });
+                            
+                            // Premier rendu de l’interface avec la première entreprise de la liste
+                            renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
+                        } else {
+                            compSelector.innerHTML = "<option value=''>Aucune entreprise assignée</option>";
+                        }
+
+                        // Écouteur d'événement sur le changement d'entreprise active
+                        compSelector.addEventListener('change', () => {
+                            renderCompanyData(compSelector.value, compSelector.options[compSelector.selectedIndex].text);
+                        });
+
+                    } else {
+                        console.error("Erreur d'extraction : ", result.message);
+                    }
+                } catch (error) {
+                    console.error("Erreur de communication API : ", error);
+                }
+            }
+
+            // 3. Traitement et filtrage dynamique des données de l'entreprise sélectionnée
+            function renderCompanyData(companyId, companyName) {
+                // Mise à jour du sous-titre
+                document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + companyName;
+                
+                // Filtrage des stocks appartenant uniquement à l'entreprise sélectionnée
+                const stockFiltre = dataStocksGlobal.filter(item => Number(item.entrepriseId) === Number(companyId));
+                // Filtrage des produits appartenant uniquement à l'entreprise sélectionnée
+                const produitsFiltre = dataProduitsGlobal.filter(item => Number(item.entrepriseId) === Number(companyId));
+                
+                // Calcul automatique des alertes de stock (Quantité inférieure ou égale à 5)
+                const alertesCount = stockFiltre.filter(item => Number(item.quantite) <= 5).length;
+                document.getElementById('stock-alerts-count').innerText = alertesCount;
+                
+                // Les variables stockFiltre et produitsFiltre sont prêtes pour alimenter vos futurs modules de caisse et inventaires
+                console.log(`[Données chargées] Entreprise : ${companyName} (ID: ${companyId})`, {
+                    stocks: stockFiltre,
+                    produits: produitsFiltre
+                });
+            }
+
+            // Lancement automatique du chargement des données métier au chargement de la page
+            fetchDashboardData();
         }
 
         // Gestion propre de la déconnexion
         document.getElementById('btn-logout').addEventListener('click', () => {
-            localStorage.removeItem('caisse_session'); // Destruction de la session locale
-            window.location.replace('../'); // Retour immédiat à la racine
+            localStorage.removeItem('caisse_session'); 
+            window.location.replace('../'); 
         });
     </script>
 </body>
