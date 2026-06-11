@@ -78,13 +78,14 @@
         let activeCategory = "TOUT";
 
         function showBlockError(message) {
-            loadingOverlay.classList.remove('hidden');
-            if (loadingSpinner) loadingSpinner.remove();
-            loadingText.innerHTML = `
-                <span class="text-red-500 font-bold block text-xl mb-2">Erreur</span>
-                <span class="text-gray-300 text-sm block max-w-md mx-auto">${message}</span>
-                <button onclick="window.location.replace('/caisse-nosignal/')" class="mt-6 bg-[#222] hover:bg-white hover:text-black px-6 py-2 rounded transition cursor-pointer">Retour accueil</button>
-            `;
+            console.error("Erreur de module :", message);
+            // On cache l'overlay même en cas d'erreur pour voir ce qui s'affiche
+            loadingOverlay.classList.add('hidden');
+            // On ajoute un petit indicateur visuel discret au lieu d'une page d'erreur
+            const errorDiv = document.createElement('div');
+            errorDiv.className = "fixed top-4 right-4 bg-red-900 text-white p-4 rounded z-50 text-sm";
+            errorDiv.innerText = "Note : Problème de chargement des données.";
+            document.body.appendChild(errorDiv);
         }
 
         // SÉCURITÉ : Pas de redirection, juste un message d'erreur
@@ -117,8 +118,10 @@
                 // Appel de vos fonctions de rendu ici (ex: renderCategories())
                 
             } catch (e) {
-                showBlockError("Impossible de contacter le serveur. Vérifiez votre connexion.");
-            }
+                // Affiche l'erreur technique réelle au lieu d'un message générique
+                showBlockError("Détail technique : " + e.message); 
+                console.error("Erreur complète :", e);
+                }
             }
             fetchCaisseData();
         }
