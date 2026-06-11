@@ -67,7 +67,9 @@
                     username: result.identifiant,
                     roleId: result.roleId,
                     permissions: result.permissions,
-                    entreprisesRaw: result.entreprises // Renvoie la chaîne d'IDs (ex: "1, 2")
+                    entreprisesRaw: result.entreprises,
+                    entreprisesPatron: result.entreprisesPatron, 
+                    isAdmin: result.isAdmin
                 }));
                 
                 // Redirection vers le tableau de bord
