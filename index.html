@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Connexion Caisse</title>
+</head>
+<body>
+    <h1>Test de la Caisse Enregistreuse</h1>
+    <button id="btnTest">Simuler une Vente au Burger Shot</button>
+    <p id="statut"></p>
+
+    <script>
+        // REMPLACEZ CETTE URL PAR LA VOTRE
+        const API_URL = "VOTRE_URL_DE_DEPLOYEMENT_ICI";
+
+        document.getElementById('btnTest').addEventListener('click', async () => {
+            const statutTxt = document.getElementById('statut');
+            statutTxt.innerText = "Envoi de la transaction en cours...";
+
+            const transaction = {
+                action: "ajouterMouvement",
+                entreprise: "Burger Shot",
+                utilisateur: "TestEmploye",
+                typeAction: "Vente",
+                element: "Menu Burger XL",
+                quantite: 1,
+                prixTotal: 15
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(transaction)
+                });
+                const resultat = await response.json();
+                statutTxt.innerText = "Résultat du serveur : " + resultat.message;
+            } catch (error) {
+                statutTxt.innerText = "Erreur de connexion : " + error;
+            }
+        });
+    </script>
+</body>
+</html>
