@@ -5,25 +5,37 @@ document.addEventListener("DOMContentLoaded", () => {
     // Récupération sécurisée de la session locale
     const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
     if (!sessionData) {
-        // Redirection vers la racine (index.html de connexion) si aucune session n'est active
-        window.location.replace('../');
+        // Si aucune session, on tente de revenir intelligemment à la racine de connexion
+        const isSubFolder = window.location.pathname.includes('/caisse/') || 
+                            window.location.pathname.includes('/dashboard/') || 
+                            window.location.pathname.includes('/stock/') || 
+                            window.location.pathname.includes('/historique/') ||
+                            window.location.pathname.includes('/gestion-entreprise/') ||
+                            window.location.pathname.includes('/gestion-site/');
+        window.location.replace(isSubFolder ? '../' : './');
         return;
     }
 
     const path = window.location.pathname;
     
-    // Tous nos modules métiers étant dans des sous-dossiers (caisse/, dashboard/, etc.),
-    // le préfixe relatif pour naviguer d'un dossier frère à un autre est toujours "../"
-    const prefix = "../";
+    // Détection stricte : si l'URL contient un des sous-dossiers de l'application, 
+    // le préfixe doit obligatoirement être "../" pour pouvoir en sortir.
+    const isSubFolder = path.includes('/caisse/') || 
+                        path.includes('/dashboard/') || 
+                        path.includes('/stock/') || 
+                        path.includes('/historique/') ||
+                        path.includes('/gestion-entreprise/') ||
+                        path.includes('/gestion-site/');
+                        
+    const prefix = isSubFolder ? "../" : "./";
 
-    // Fonction de détection pour savoir si l'onglet analysé est l'onglet actif de la page courante
+    // Fonction de détection pour savoir si l'onglet analysé est l'onglet actif
     const isActive = (folder) => path.includes(`/${folder}/`);
 
-    // Vérification fine des rôles et des accès administratifs
+    // Vérification des rôles et des accès administratifs
     const isAdmin = sessionData.permissions && sessionData.permissions.includes("Admin");
     const isPatron = sessionData.permissions && sessionData.permissions.includes("Patron");
 
-    // Détermination textuelle du rôle pour l'affichage en bas de la barre
     let roleLabel = "Employé";
     if (isAdmin) roleLabel = "Administrateur";
     else if (isPatron) roleLabel = "Patron";
@@ -50,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </a>
     `;
 
-    // Affichage conditionnel de l'onglet Gestion Entreprise (Uniquement Admin ou Patron)
+    // Affichage conditionnel de l'onglet Gestion Entreprise
     if (isAdmin || isPatron) {
         navHTML += `
                 <a href="${prefix}gestion-entreprise/" class="flex items-center space-x-3 p-3 rounded font-medium transition ${isActive('gestion-entreprise') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
@@ -59,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
-    // Affichage conditionnel de l'onglet Gestion Site (Strictement réservé aux Administrateurs globaux)
+    // Affichage conditionnel de l'onglet Gestion Site
     if (isAdmin) {
         navHTML += `
                 <a href="${prefix}gestion-site/" class="flex items-center space-x-3 p-3 rounded font-medium transition ${isActive('gestion-site') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
@@ -68,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     }
 
-    // Fermeture des balises et injection des données de l'utilisateur connecté
+    // Fermeture des balises et injection des données de l'utilisateur
     navHTML += `
             </nav>
         </div>
@@ -82,10 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
     </aside>
     `;
 
-    // Injection propre dans le conteneur HTML prévu
+    // Injection propre dans le conteneur HTML
     sidebarContainer.innerHTML = navHTML;
 
-    // Écouteur centralisé pour vider le stockage local et déconnecter proprement l'utilisateur
+    // Écouteur pour la déconnexion
     document.getElementById('btn-logout-nav').addEventListener('click', () => {
         localStorage.removeItem('caisse_session');
         localStorage.removeItem('active_company_id');
