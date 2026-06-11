@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!sidebarContainer) return;
 
     const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
+    console.log("DEBUG SESSION :", sessionData);
     const activeCompanyId = localStorage.getItem('active_company_id');
 
     // Sécurité : blocage si pas de session
