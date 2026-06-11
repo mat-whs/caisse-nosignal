@@ -1,57 +1,19 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion Entreprise - Caisse NoSignal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/caisse-nosignal/gateway.js"></script>
-    <script src="/caisse-nosignal/nav.js"></script>
-</head>
-<body class="bg-[#1a1a1a] text-white min-h-screen flex">
+<div class="p-8 space-y-8">
+    <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
+        <h3 class="text-xl font-bold mb-4">Gestion Équipe</h3>
+        <button class="bg-blue-600 px-4 py-2 rounded text-sm font-bold">Générer un lien d'invitation</button>
+        <div id="links-container" class="mt-4 text-xs font-mono text-gray-500"></div>
+    </section>
 
-    <div id="sidebar-container" class="h-full shrink-0"></div>
+    <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
+        <h3 class="text-xl font-bold mb-4">Ajouter au Stock</h3>
+        <input type="text" id="stock-name" placeholder="Nom élément" class="bg-[#222] p-2 rounded">
+        <button onclick="addStock()" class="bg-emerald-600 px-4 py-2 rounded">Ajouter Stock</button>
+    </section>
 
-    <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
-            <h2 class="text-xl font-bold tracking-wide">Gestion de l'Entreprise</h2>
-            <div class="flex items-center space-x-4">
-                <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active</span>
-                <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
-                    <option value="">Chargement...</option>
-                </select>
-            </div>
-        </header>
-
-        <div class="flex-1 p-8 overflow-y-auto space-y-8">
-            <section class="bg-[#111] border border-[#222] p-6 rounded-xl">
-                <h3 class="text-lg font-bold mb-4">Informations de l'établissement</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Nom de l'entreprise</label>
-                        <input type="text" class="w-full bg-[#161616] border border-[#333] p-2 rounded text-white" placeholder="Nom...">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Code accès patron</label>
-                        <input type="password" class="w-full bg-[#161616] border border-[#333] p-2 rounded text-white" placeholder="****">
-                    </div>
-                </div>
-                <button class="mt-6 bg-white text-black px-6 py-2 rounded font-bold hover:bg-gray-200 transition">Enregistrer</button>
-            </section>
-
-            <section class="bg-[#111] border border-[#222] p-6 rounded-xl">
-                <h3 class="text-lg font-bold mb-4">Membres de l'équipe</h3>
-                <div id="employees-list" class="text-sm text-gray-400">
-                    <p>Liste des employés chargée.</p>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <script>
-        // Note : Accès libre activé.
-        // Vous pouvez ajouter ici votre logique de gestion sans vérification de session.
-        console.log("Mode accès libre : Gestion Entreprise");
-    </script>
-</body>
-</html>
+    <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
+        <h3 class="text-xl font-bold mb-4">Ajouter Produit en Caisse</h3>
+        <select id="stock-reference" class="bg-[#222] p-2 rounded"></select>
+        <button onclick="addProduct()" class="bg-purple-600 px-4 py-2 rounded">Ajouter à la Caisse</button>
+    </section>
+</div>
