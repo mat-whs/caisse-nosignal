@@ -1,0 +1,51 @@
+@theme {
+  /* Correction des classes de couleur personnalisées ( typos HTML ) */
+  --color-gray-4xl: #a3a3a3; /* Équivalent gray-400 */
+  --color-emerald-4xl: #34d399; /* Équivalent emerald-400 */
+
+  /* Configuration de l'animation d'apparition */
+  --animate-fade-in: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* --- Styles Globaux Personnalisés --- */
+
+/* Personnalisation moderne des barres de défilement (Scrollbars) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* Style appliqué aux menus déroulants natifs pour correspondre au thème sombre */
+select option {
+  background-color: #222222;
+  color: #ffffff;
+}
+
+/* Sécurité d'affichage pour éviter les clignotements au chargement */
+.hidden {
+  display: none !important;
+}
