@@ -93,26 +93,33 @@
         } else {
             async function fetchCaisseData() {
                 try {
-                    const response = await fetch(CONFIG.API_URL, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json" // <--- C'est crucial
-                        },
-                        body: JSON.stringify({ action: "getFormData", userId: sessionData.userId })
-                    });
-                    const result = await response.json();
-                    
-                    if (!result.success || !result.produits) {
-                        showBlockError("Aucune donnée disponible pour cette caisse.");
-                        return;
-                    }
-
-                    dataProduitsGlobal = result.produits;
-                    loadingOverlay.classList.add('hidden');
-                    // ... (reste de vos fonctions de rendu)
-                } catch (e) {
-                    showBlockError("Impossible de contacter le serveur.");
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "getFormData", userId: sessionData.userId })
+                });
+                const result = await response.json();
+                
+                // --- MODIFICATION : Plus de blocage strict ---
+                // On affiche un avertissement console au lieu d'une erreur bloquante
+                if (!result.success) {
+                    showBlockError("Erreur serveur : " + result.message);
+                    return;
                 }
+        
+                // Si produits est vide, on initialise une liste vide au lieu de planter
+                dataProduitsGlobal = result.produits || []; 
+                
+                if (dataProduitsGlobal.length === 0) {
+                    console.warn("Aucun produit trouvé, mais le module continue de charger.");
+                }
+        
+                loadingOverlay.classList.add('hidden');
+                // Appel de vos fonctions de rendu ici (ex: renderCategories())
+                
+            } catch (e) {
+                showBlockError("Impossible de contacter le serveur. Vérifiez votre connexion.");
+            }
             }
             fetchCaisseData();
         }
