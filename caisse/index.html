@@ -98,7 +98,19 @@
         }
 
         if (!sessionData) {
-            window.location.replace('../');
+            loadingOverlay.classList.remove('hidden');
+            if (loadingSpinner) loadingSpinner.remove();
+    
+            loadingText.innerHTML = `
+                <span class="text-red-500 font-bold block text-2xl mb-4">Erreur de Session</span>
+                <p class="text-gray-300 text-sm mb-6">Aucune session active n'a été détectée dans votre navigateur.</p>
+                <div class="bg-[#222] p-4 rounded text-xs text-left font-mono text-gray-400 overflow-x-auto">
+                    DEBUG: localStorage.getItem('caisse_session') est null.
+                </div>
+                <button onclick="window.location.replace('../')" class="mt-6 bg-[#222] hover:bg-white hover:text-black border border-[#333] text-white px-6 py-2 rounded transition cursor-pointer">
+                    Retour à la connexion
+                </button>
+            `;
         } else {
             async function fetchCaisseData() {
                 try {
