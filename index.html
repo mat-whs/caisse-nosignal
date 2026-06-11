@@ -2,41 +2,176 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Test Connexion Caisse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RP.caisse - Système de Gestion</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="config.js"></script>
 </head>
-<body>
-    <h1>Test de la Caisse Enregistreuse</h1>
-    <button id="btnTest">Simuler une Vente au Burger Shot</button>
-    <p id="statut"></p>
+<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen flex items-center justify-center">
+
+    <div id="login-screen" class="bg-[#242424] p-8 rounded-lg shadow-xl w-full max-w-md border border-[#333]">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold tracking-wider text-white">RP.<span class="text-gray-4xl font-light">caisse</span></h1>
+            <p class="text-gray-4xl text-sm mt-2">Veuillez vous authentifier</p>
+        </div>
+        
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-gray-4xl font-semibold mb-2">Identifiant</label>
+                <input type="text" id="username" required class="w-full bg-[#1a1a1a] border border-[#444] rounded p-3 text-white focus:outline-none focus:border-gray-400 transition">
+            </div>
+            <div>
+                <label class="block text-xs uppercase tracking-wider text-gray-4xl font-semibold mb-2">Mot de passe</label>
+                <input type="password" id="password" required class="w-full bg-[#1a1a1a] border border-[#444] rounded p-3 text-white focus:outline-none focus:border-gray-400 transition">
+            </div>
+            <button type="submit" class="w-full bg-white text-black font-bold p-3 rounded hover:bg-gray-200 transition cursor-pointer">
+                Se connecter
+            </button>
+        </form>
+        <p id="login-error" class="text-red-500 text-sm text-center mt-4 hidden"></p>
+    </div>
+
+    <div id="dashboard-screen" class="w-full min-h-screen flex hidden animate-fade-in">
+        
+        <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between">
+            <div>
+                <div class="p-6 border-b border-[#222]">
+                    <span class="text-xl font-bold tracking-wider text-white">RP.<span class="font-light">caisse</span></span>
+                </div>
+                <nav class="p-4 space-y-2">
+                    <a href="#" class="flex items-center space-x-3 bg-[#222] text-white p-3 rounded font-medium transition">
+                        <span>📊</span> <span>Tableau de bord</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
+                        <span>🛒</span> <span>Caisse</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
+                        <span>📦</span> <span>Stock</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-gray-4xl p-3 rounded hover:bg-[#222] hover:text-white transition">
+                        <span>⏳</span> <span>Historique</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-[#222] flex items-center justify-between">
+                <div>
+                    <p id="user-display-name" class="font-bold text-white text-sm">Nom</p>
+                    <p id="user-display-role" class="text-xs text-gray-500 uppercase tracking-wider">Rôle</p>
+                </div>
+                <button id="btn-logout" class="text-xs bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
+            </div>
+        </aside>
+
+        <main class="flex-1 bg-[#161616] flex flex-col">
+            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8">
+                <div class="flex items-center space-x-4">
+                    <span class="text-xs uppercase tracking-wider text-gray-4xl font-semibold">Entreprise</span>
+                    <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
+                        </select>
+                </div>
+            </header>
+
+            <section class="p-8 flex-1 space-y-8 overflow-y-auto">
+                <div>
+                    <p id="dashboard-subtitle" class="text-xs uppercase tracking-widest text-gray-500 font-bold">Tableau de bord</p>
+                    <h2 class="text-4xl font-bold text-white mt-1">Vue d'ensemble</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
+                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">CA du Jour</p>
+                        <p class="text-3xl font-bold text-white">0,00 $US</p>
+                        <p class="text-xs text-gray-500 mt-1">0 tickets</p>
+                    </div>
+                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
+                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">CA Total</p>
+                        <p class="text-3xl font-bold text-white">0,00 $US</p>
+                        <p class="text-xs text-gray-500 mt-1">0 ventes</p>
+                    </div>
+                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
+                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Tickets Aujourd'hui</p>
+                        <p class="text-3xl font-bold text-white">0</p>
+                    </div>
+                    <div class="bg-[#1f1f1f] p-6 rounded-lg border border-[#2e2e2e]">
+                        <p class="text-xs uppercase tracking-wider text-gray-4xl font-bold border-b border-[#333] pb-2 mb-3">Alertes Stock</p>
+                        <p class="text-3xl font-bold text-emerald-4xl">0</p>
+                        <p class="text-xs text-gray-500 mt-1">≤ 5 unités</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <script>
-        // REMPLACEZ CETTE URL PAR LA VOTRE
-        const API_URL = "https://script.google.com/macros/s/AKfycbx9MPzvLafm_9haXTkC0s1AeWVZl9s7xPvn6KfcKNa5828umvTUbxnECKHoO5PxHXoA/exec";
-
-        document.getElementById('btnTest').addEventListener('click', async () => {
-            const statutTxt = document.getElementById('statut');
-            statutTxt.innerText = "Envoi de la transaction en cours...";
-
-            const transaction = {
-                action: "ajouterMouvement",
-                entreprise: "Burger Shot",
-                utilisateur: "TestEmploye",
-                typeAction: "Vente",
-                element: "Menu Burger XL",
-                quantite: 1,
-                prixTotal: 15
-            };
-
+        // Gestion de la soumission du formulaire de connexion
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userInp = document.getElementById('username').value;
+            const passInp = document.getElementById('password').value;
+            const errorTxt = document.getElementById('login-error');
+            
+            errorTxt.classList.add('hidden');
+            
             try {
-                const response = await fetch(API_URL, {
+                // Envoi des identifiants à l'API Google Apps Script
+                const response = await fetch(CONFIG.API_URL, {
                     method: "POST",
-                    body: JSON.stringify(transaction)
+                    body: JSON.stringify({
+                        action: "connexion",
+                        username: userInp,
+                        password: passInp
+                    })
                 });
-                const resultat = await response.json();
-                statutTxt.innerText = "Résultat du serveur : " + resultat.message;
+                
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    // Masquer l'écran de connexion et afficher le tableau de bord
+                    document.body.classList.remove('items-center', 'justify-center');
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('dashboard-screen').classList.remove('hidden');
+                    
+                    // Configurer les informations de l'utilisateur connecté
+                    document.getElementById('user-display-name').innerText = userInp;
+                    document.getElementById('user-display-role').innerText = result.role;
+                    
+                    // Remplir dynamiquement le sélecteur d'entreprises autorisées
+                    const compSelector = document.getElementById('company-selector');
+                    compSelector.innerHTML = ""; // Vider le sélecteur
+                    
+                    // Découper la liste des entreprises reçues (ex: "Burger Shot, Vigneron")
+                    const listeEntreprises = result.entreprises.split(',').map(item => item.trim());
+                    listeEntreprises.forEach(entreprise => {
+                        const opt = document.createElement('option');
+                        opt.value = window.crypto.randomUUID ? window.crypto.randomUUID() : entreprise; // Valeur propre
+                        opt.innerText = entreprise;
+                        compSelector.appendChild(opt);
+                    });
+                    
+                    // Mettre à jour le sous-titre de la vue d'ensemble avec l'entreprise active
+                    document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + compSelector.options[compSelector.selectedIndex].text;
+                    
+                    // Événement en cas de changement d'entreprise dans la liste déroulante
+                    compSelector.addEventListener('change', () => {
+                        document.getElementById('dashboard-subtitle').innerText = "Tableau de bord • " + compSelector.options[compSelector.selectedIndex].text;
+                    });
+                    
+                } else {
+                    errorTxt.innerText = result.message;
+                    errorTxt.classList.remove('hidden');
+                }
+                
             } catch (error) {
-                statutTxt.innerText = "Erreur de connexion : " + error;
+                errorTxt.innerText = "Erreur de communication réseau.";
+                errorTxt.classList.remove('hidden');
+                console.error(error);
             }
+        });
+
+        // Gestion du bouton de déconnexion
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            window.location.reload(); // Recharger la page réinitialise l'état proprement
         });
     </script>
 </body>
