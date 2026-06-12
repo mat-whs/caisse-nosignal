@@ -83,13 +83,26 @@
         
         function showBlockError(message) {
             console.error("Erreur de module :", message);
-            // On cache l'overlay même en cas d'erreur pour voir ce qui s'affiche
             loadingOverlay.classList.add('hidden');
-            // On ajoute un petit indicateur visuel discret au lieu d'une page d'erreur
+            // On garde l'affichage de l'erreur seulement si c'est une vraie erreur technique
             const errorDiv = document.createElement('div');
             errorDiv.className = "fixed top-4 right-4 bg-red-900 text-white p-4 rounded z-50 text-sm";
-            errorDiv.innerText = "Note : Problème de chargement des données.";
+            errorDiv.innerText = "Erreur : " + message;
             document.body.appendChild(errorDiv);
+        }
+        
+        // Nouvelle fonction pour le message "Pas d'éléments"
+        function displayEmptyState() {
+            const productsGrid = document.getElementById('products-grid');
+            if (productsGrid) {
+                productsGrid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
+                        <span class="text-4xl mb-4">🛒</span>
+                        <p class="text-lg font-semibold">Pas d'éléments dans la caisse</p>
+                    </div>
+                `;
+            }
+            loadingOverlay.classList.add('hidden');
         }
 
         // SÉCURITÉ : Pas de redirection, juste un message d'erreur
@@ -116,8 +129,9 @@
         
                 // Sécurité : Vérification si des produits existent
                 if (!result.produits || result.produits.length === 0) {
-                    showBlockError("Aucun produit n'est configuré pour cette caisse.");
-                    return;
+                    displayEmptyState(); // Appel de la nouvelle fonction propre
+                } else {
+                    dataProduitsGlobal = result.produits;
                 }
         
                 dataProduitsGlobal = result.produits;
