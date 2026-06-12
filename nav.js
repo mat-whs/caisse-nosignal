@@ -38,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     const isPatronOfActive = entreprisesPatron.includes(activeCompanyId);
-
     const path = window.location.pathname;
     const rootPath = "/caisse-nosignal/";
     const isActive = (folder) => path.includes(`/${folder}/`);
