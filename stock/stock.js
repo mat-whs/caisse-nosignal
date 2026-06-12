@@ -1,3 +1,5 @@
+console.log("Le fichier stock.js est chargé !");
+
 // 1. Récupération des données
 async function loadStockData() {
     // Appel à votre API (identique à la caisse)
