@@ -1,3 +1,7 @@
+window.navLoaded = new Promise((resolve) => {
+    window.renderNav = resolve;
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
@@ -93,6 +97,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     sidebarContainer.innerHTML = navHTML;
 
+    window.resolveNavReady();
+    
     // Ajout du listener de déconnexion après l'injection
     document.getElementById('btn-logout-nav').addEventListener('click', () => {
         localStorage.removeItem('caisse_session');
