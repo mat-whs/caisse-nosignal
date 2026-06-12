@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
 
