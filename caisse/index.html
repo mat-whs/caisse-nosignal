@@ -111,13 +111,16 @@
         } else {
             async function fetchCaisseData() {
             try {
-                const formData = new FormData();
-                formData.append('action', 'getCaisseData');
-                formData.append('userId', sessionData.userId);
+                const params = new URLSearchParams();
+                params.append('action', 'getCaisseData');
+                params.append('userId', sessionData.userId);
                 
                 const response = await fetch(CONFIG.API_URL, {
                     method: "POST",
-                    body: formData
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: params
                 });
                 
                 const result = await response.json();
@@ -127,6 +130,14 @@
                     return;
                 }
 
+                dataProduitsGlobal = result.produits;
+                userRoleInfo = result.userRoleInfo;
+                
+                renderCategories(); 
+                renderAdminButton(); 
+                
+                loadingOverlay.classList.add('hidden');
+                
                 function renderAdminButton() {
                     const container = document.getElementById('admin-actions-container');
                     const compSelector = document.getElementById('company-selector');
@@ -229,12 +240,12 @@
                     btnSubmit.classList.add('cursor-not-allowed');
                 } else {
                     cart.forEach(item => {
-                        total += (item.prixVente * item.quantite);
+                        total += (item.prix * item.quantite);
                         container.innerHTML += `
                             <div class="flex justify-between items-center text-sm">
                                 <div>
-                                    <p class="text-white">${item.nomProduit}</p>
-                                    <p class="text-xs text-gray-500">${item.quantite} x ${item.prixVente}$</p>
+                                    <p class="text-white">${item.nom}</p>
+                                    <p class="text-xs text-gray-500">${item.quantite} x ${item.prix}$</p>
                                 </div>
                                 <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-400">✕</button>
                             </div>
@@ -270,8 +281,8 @@
                 
                 grid.innerHTML = filtered.map(p => `
                     <button onclick="addToCart(${p.id})" class="bg-[#222] p-4 rounded-lg text-left hover:border border-emerald-500 transition">
-                        <p class="font-bold">${p.nomProduit}</p>
-                        <p class="text-emerald-400 text-sm font-semibold mt-1">${p.prixVente} $US</p>
+                        <p class="font-bold">${p.nom}</p>
+                        <p class="text-emerald-400 text-sm font-semibold mt-1">${p.prix} $US</p>
                     </button>
                 `).join('');
                 
