@@ -114,14 +114,36 @@
         
                 // Si produits est vide, on initialise une liste vide au lieu de planter
                 dataProduitsGlobal = result.produits || []; 
+
+                const compSelector = document.getElementById('company-selector');
+                if (compSelector) {
+                    compSelector.innerHTML = ""; // Vide le "Chargement..."
+                    
+                    // Remplissage du select
+                    result.entreprises.forEach(entreprise => {
+                        const opt = document.createElement('option');
+                        opt.value = entreprise.id;
+                        opt.innerText = entreprise.nom;
+                        compSelector.appendChild(opt);
+                    });
                 
+                    // Optionnel : Restaurer la sélection précédente si elle existe
+                    const savedCompany = localStorage.getItem('active_company_id');
+                    if (savedCompany) compSelector.value = savedCompany;
+                
+                    // Sauvegarder lors d'un changement
+                    compSelector.addEventListener('change', (e) => {
+                        localStorage.setItem('active_company_id', e.target.value);
+                    });
+                }
+                    
                 if (dataProduitsGlobal.length === 0) {
                     console.warn("Aucun produit trouvé, mais le module continue de charger.");
                 }
         
                 loadingOverlay.classList.add('hidden');
                 // Appel de vos fonctions de rendu ici (ex: renderCategories())
-                
+                    
             } catch (e) {
                 // Affiche l'erreur technique réelle au lieu d'un message générique
                 showBlockError("Détail technique : " + e.message); 
