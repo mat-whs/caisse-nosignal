@@ -37,59 +37,42 @@
         window.location.replace('/caisse-nosignal/dashboard/');
     }
     
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const userInp = document.getElementById('username').value;
-        const passInp = document.getElementById('password').value;
-        const errorTxt = document.getElementById('login-error');
-        
-        errorTxt.classList.add('hidden');
-        
-        try {
-            const response = await fetch(CONFIG.API_URL, {
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const userInp = document.getElementById('username').value;
+    const passInp = document.getElementById('password').value;
+    const errorTxt = document.getElementById('login-error');
+    
+    errorTxt.classList.add('hidden');
+    
+    // --- MODIFICATION ICI : Utilisation de FormData ---
+    const formData = new FormData();
+    formData.append('action', 'login');
+    formData.append('identifiant', userInp);
+    formData.append('motDePasse', passInp);
+    
+    try {
+        const response = await fetch(CONFIG.API_URL, {
             method: "POST",
-            // Nous retirons le mode 'cors' pour éviter la requête OPTIONS bloquante
-            // Nous envoyons le body tel quel
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: "login",
-                identifiant: userInp,
-                motDePasse: passInp
-            })
+            body: formData // On envoie le formulaire au lieu du JSON
         });
-            
-            const result = await response.json();
-            
-            // Le script renvoie "success: true" ou "success: false"
-            if (result.success) {
-                // Sauvegarde des données de session (ID, identifiant, et IDs d'entreprises)
-                localStorage.setItem('caisse_session', JSON.stringify({
-                    userId: result.id,
-                    username: result.identifiant,
-                    roleId: result.roleId,
-                    permissions: result.permissions,
-                    entreprisesRaw: result.entreprises,
-                    entreprisesPatron: result.entreprisesPatron, 
-                    isAdmin: result.isAdmin
-                }));
-                
-                // Redirection vers le tableau de bord
-                window.location.replace('/caisse-nosignal/dashboard/');
-            } else {
-                // Affiche les messages précis du script : "Mot de passe incorrect", "Utilisateur introuvable", etc.
-                errorTxt.innerText = result.message;
-                errorTxt.classList.remove('hidden');
-            }
-            
-        } catch (error) {
-            errorTxt.innerText = "Erreur de communication réseau.";
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            localStorage.setItem('caisse_session', JSON.stringify(result));
+            window.location.replace('/caisse-nosignal/dashboard/');
+        } else {
+            errorTxt.innerText = result.message;
             errorTxt.classList.remove('hidden');
-            console.error(error);
         }
-    });
+    } catch (error) {
+        errorTxt.innerText = "Erreur : Assurez-vous d'avoir redéployé le Code.gs.";
+        errorTxt.classList.remove('hidden');
+        console.error(error);
+    }
+});
 </script>
 </body>
 </html>
