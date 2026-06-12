@@ -17,9 +17,26 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const formData = new FormData();
+    formData.append('action', 'checkAuth');
+    formData.append('userId', sessionData.userId);
+    formData.append('token', sessionData.token);
+    
     // Logique de droits
-    const isAdmin = sessionData.isAdmin === true;
-    const entreprisesPatron = sessionData.entreprisesPatron ? sessionData.entreprisesPatron.split(',').map(id => id.trim()) : [];
+    let isAdmin = false;
+    let entreprisesPatron = [];
+
+    try {
+        const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+        const result = await response.json();
+        if (result.success) {
+            isAdmin = result.isAdmin;
+            entreprisesPatron = result.entreprisesPatron.split(',').map(id => id.trim());
+        }
+    } catch (e) {
+        console.error("Erreur vérification auth :", e);
+    }
+    
     const isPatronOfActive = entreprisesPatron.includes(activeCompanyId);
 
     const path = window.location.pathname;
