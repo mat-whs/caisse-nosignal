@@ -32,5 +32,25 @@ function renderStock(stocks) {
     });
 }
 
+async function editStock(id) {
+    const nouvelleQte = prompt("Entrez la nouvelle quantité :");
+    if (nouvelleQte === null) return;
+
+    const formData = new FormData();
+    formData.append('action', 'updateStock');
+    formData.append('id', id);
+    formData.append('quantite', nouvelleQte);
+
+    const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+    const result = await response.json();
+
+    if (result.success) {
+        alert("Stock mis à jour !");
+        loadStockData(); // Recharge la liste
+    } else {
+        alert("Erreur : " + result.message);
+    }
+}
+
 // Lancement au chargement
 document.addEventListener('DOMContentLoaded', loadStockData);
