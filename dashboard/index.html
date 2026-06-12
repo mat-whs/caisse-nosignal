@@ -94,8 +94,7 @@
 
         const response = await fetch(CONFIG.API_URL, {
             method: "POST",
-            mode: 'no-cors',
-            body: formData // On envoie le formulaire
+            body: formData
         });
         
         const result = await response.json();
