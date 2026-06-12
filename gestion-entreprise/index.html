@@ -3,88 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion - Caisse NoSignal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Gestion Entreprise - NoSignal</title>
+    <script src="/caisse-nosignal/config.js"></script>
     <script src="/caisse-nosignal/gateway.js"></script>
     <script src="/caisse-nosignal/nav.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#1a1a1a] text-white min-h-screen flex">
+<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
 
-    <div id="sidebar-container" class="h-full shrink-0"></div>
+    <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
+        <p id="loading-text" class="text-lg text-gray-300 mt-4">Chargement de la gestion...</p>
+    </div>
 
-    <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
-            <h2 class="text-xl font-bold">Gestion Administrative</h2>
-            <div class="flex space-x-2 bg-[#222] p-1 rounded-lg">
-                <button onclick="showTab('equipe')" class="px-4 py-1.5 rounded text-sm font-medium bg-[#333]">Équipe</button>
-                <button onclick="showTab('stock')" class="px-4 py-1.5 rounded text-sm font-medium hover:bg-[#333]">Stock</button>
-                <button onclick="showTab('caisse')" class="px-4 py-1.5 rounded text-sm font-medium hover:bg-[#333]">Caisse</button>
-            </div>
-        </header>
+    <div id="dashboard-screen" class="w-full min-h-screen flex">
+        <div id="sidebar-container" class="h-full shrink-0"></div>
 
-        <div class="p-8 overflow-y-auto">
-            <div id="tab-equipe" class="tab-content space-y-6">
-                <section class="bg-[#111] p-6 rounded-xl border border-[#222]">
-                    <h3 class="text-lg font-bold mb-4">Ajouter un Employé</h3>
-                    <div class="flex flex-col gap-4">
-                        <input type="text" id="emp-name" placeholder="Nom et Prénom de l'employé" class="bg-[#222] border border-[#333] p-2 rounded w-full">
-                        <button onclick="genererLien()" class="bg-blue-600 px-4 py-2 rounded text-sm font-bold w-full hover:bg-blue-700 transition">
-                            Générer lien d'invitation
-                        </button>
+        <main class="flex-1 bg-[#161616] flex flex-col min-w-0">
+            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
+                <h2 class="text-lg font-bold">Gestion des Produits</h2>
+                <div id="company-name-display" class="text-xs text-gray-400 bg-[#222] px-3 py-1 rounded"></div>
+            </header>
+
+            <div class="flex-1 p-8 overflow-y-auto">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <div class="bg-[#111] border border-[#222] rounded-xl p-6">
+                        <h3 class="text-xl font-bold mb-4">Liste des articles</h3>
+                        <div id="products-table-container" class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-gray-500 text-xs uppercase border-b border-[#222]">
+                                        <th class="pb-3">Nom</th>
+                                        <th class="pb-3">Catégorie</th>
+                                        <th class="pb-3">Prix ($)</th>
+                                        <th class="pb-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="products-tbody">
+                                    </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div id="links-container" class="mt-4 p-3 bg-[#161616] rounded border border-[#333] text-xs font-mono text-gray-400 hidden">
-                        Lien généré : <span id="link-output" class="text-white break-all"></span>
-                    </div>
-                </section>
+                </div>
             </div>
-
-            <div id="tab-stock" class="tab-content hidden space-y-6">...</div>
-            <div id="tab-caisse" class="tab-content hidden space-y-6">...</div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
-        // Gestion des onglets
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-        }
-
-        // Logique génération lien
-async function genererLien() {
-    const nom = document.getElementById('emp-name').value;
-    if (!nom) {
-        alert("Veuillez saisir le nom et prénom.");
-        return;
-    }
-
-    // Appel vers Google Apps Script
-    try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: "POST",
-            body: JSON.stringify({ 
-                action: "genererInvitation", 
-                nom: nom 
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            const container = document.getElementById('links-container');
-            const output = document.getElementById('link-output');
+        const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
+        
+        async function initGestion() {
+            if (!sessionData) return window.location.replace('../');
             
-            // On utilise le token reçu du serveur
-            output.innerText = `https://mat-whs.github.io/caisse-nosignal/setup?token=${result.token}&nom=${encodeURIComponent(nom)}`;
-            container.classList.remove('hidden');
-        } else {
-            alert("Erreur lors de la génération : " + result.message);
+            // Récupérer les données via une nouvelle action dans ton GS
+            const formData = new FormData();
+            formData.append('action', 'getGestionData');
+            formData.append('userId', sessionData.userId);
+            formData.append('entrepriseId', localStorage.getItem('active_company_id'));
+
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderProducts(result.produits);
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                } else {
+                    alert("Accès refusé ou erreur : " + result.message);
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
-    } catch (error) {
-        console.error("Erreur API :", error);
-        alert("Impossible de contacter le serveur.");
-    }
-}
+
+        function renderProducts(produits) {
+            const tbody = document.getElementById('products-tbody');
+            tbody.innerHTML = produits.map(p => `
+                <tr class="border-b border-[#222] text-sm">
+                    <td class="py-4">${p.nom}</td>
+                    <td class="py-4 text-gray-400">${p.categorie}</td>
+                    <td class="py-4 font-bold text-emerald-400">${p.prix} $</td>
+                    <td class="py-4 text-right">
+                        <button onclick="editProduct(${p.id})" class="text-blue-400 hover:text-blue-300 mr-3">Modifier</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        initGestion();
     </script>
 </body>
 </html>
