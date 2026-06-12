@@ -5,11 +5,11 @@ async function loadStockData() {
     try {
         const formData = new FormData();
         formData.append('action', 'getFormData');
-        formData.append('userId', sessionData.userId); // Assurez-vous que sessionData est défini
+        formData.append('userId', sessionData.userId);
 
         const response = await fetch(CONFIG.API_URL, {
             method: "POST",
-            body: formData // On utilise FormData, pas JSON.stringify
+            body: formData
         });
         
         const result = await response.json();
@@ -76,7 +76,7 @@ async function editStock(id) {
     if (nouvelleQte === null) return;
 
     const formData = new FormData();
-    formData.append('action', 'updateStock');
+    formData.append('action', 'getStockData');
     formData.append('id', id);
     formData.append('quantite', nouvelleQte);
 
