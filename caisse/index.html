@@ -96,7 +96,7 @@
             async function fetchCaisseData() {
                 try {
                 const formData = new FormData();
-                formData.append('action', 'getFormData');
+                formData.append('action', 'getCaisseData');
                 formData.append('userId', sessionData.userId);
                 
                 const response = await fetch(CONFIG.API_URL, {
