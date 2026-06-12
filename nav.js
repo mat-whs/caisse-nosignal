@@ -3,46 +3,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!sidebarContainer) return;
 
     const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
-    console.log("DEBUG SESSION :", sessionData);
     const activeCompanyId = localStorage.getItem('active_company_id');
 
-    // Sécurité : blocage si pas de session
     if (!sessionData) {
-        document.body.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#111; color:white; font-family:sans-serif;">
-                <h1 style="color:#ef4444;">ERREUR : Session non détectée</h1>
-                <button onclick="window.location.replace('/caisse-nosignal/')" style="margin-top:20px; padding:10px 20px; cursor:pointer;">Retour connexion</button>
-            </div>
-        `;
+        window.location.replace('/caisse-nosignal/');
         return;
     }
 
+    // 1. Initialisation des variables par défaut
+    let isAdmin = false;
+    let entreprisesPatron = [];
+
+    // 2. Appel serveur pour obtenir les VRAIS droits
     const formData = new FormData();
     formData.append('action', 'checkAuth');
     formData.append('userId', sessionData.userId);
     formData.append('token', sessionData.token);
-    
-    // Logique de droits
-    let isAdmin = false;
-    let entreprisesPatron = [];
 
     try {
         const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
         const result = await response.json();
         if (result.success) {
             isAdmin = result.isAdmin;
-            entreprisesPatron = result.entreprisesPatron.split(',').map(id => id.trim());
+            // On s'assure que la liste est un tableau même si vide
+            entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
         }
     } catch (e) {
-        console.error("Erreur vérification auth :", e);
+        console.error("Erreur auth :", e);
     }
     
-    const isPatronOfActive = entreprisesPatron.includes(activeCompanyId);
+    // 3. Calcul des permissions
+    const isPatronOfActive = entreprisesPatron.includes(String(activeCompanyId));
     const path = window.location.pathname;
     const rootPath = "/caisse-nosignal/";
     const isActive = (folder) => path.includes(`/${folder}/`);
     const roleLabel = isAdmin ? "Administrateur" : (isPatronOfActive ? "Patron" : "Employé");
 
+    // 4. Génération du HTML (les variables sont maintenant à jour)
     let navHTML = `
     <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between h-full shrink-0">
         <div>
@@ -86,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
         <div class="p-4 border-t border-[#222] flex items-center justify-between">
             <div class="min-w-0 flex-1 pr-2">
-                <p class="font-bold text-white text-sm truncate">${sessionData.username || sessionData.identifiant || 'Utilisateur'}</p>
+                <p class="font-bold text-white text-sm truncate">${sessionData.username || 'Utilisateur'}</p>
                 <p class="text-[10px] text-gray-500 uppercase tracking-wider">${roleLabel}</p>
             </div>
             <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
@@ -96,6 +93,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     sidebarContainer.innerHTML = navHTML;
 
+    // Ajout du listener de déconnexion après l'injection
     document.getElementById('btn-logout-nav').addEventListener('click', () => {
         localStorage.removeItem('caisse_session');
         localStorage.removeItem('active_company_id');
