@@ -90,7 +90,7 @@
     try {
         // --- MODIFICATION ICI : Utilisation de FormData ---
         const formData = new FormData();
-        formData.append('action', 'getFormData');
+        formData.append('action', 'getDashboardData');
         formData.append('userId', sessionData.userId);
 
         const response = await fetch(CONFIG.API_URL, {
