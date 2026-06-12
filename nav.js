@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
 
+    let retries = 0;
+    while (typeof CONFIG === 'undefined' && retries < 10) {
+        await new Promise(r => setTimeout(r, 100));
+        retries++;
+    }
+    
     const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
     const activeCompanyId = localStorage.getItem('active_company_id');
 
