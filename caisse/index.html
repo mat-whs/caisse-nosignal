@@ -126,12 +126,35 @@
                     showBlockError("Erreur serveur : " + result.message);
                     return;
                 }
-        
+
+                function renderAdminButton() {
+                    const container = document.getElementById('admin-actions-container');
+                    const compSelector = document.getElementById('company-selector');
+                    const currentCompId = compSelector ? compSelector.value : "";
+                    
+                    // Logique basée sur sessionData (disponible globalement)
+                    const entreprisesPatron = sessionData.entreprisesPatron ? sessionData.entreprisesPatron.split(',').map(id => id.trim()) : [];
+                    const isPatronOfActive = entreprisesPatron.includes(currentCompId);
+                    const isAdmin = sessionData.isAdmin === true;
+            
+                    container.innerHTML = ""; 
+                    
+                    if (isAdmin || isPatronOfActive) {
+                        const btn = document.createElement('button');
+                        btn.innerText = "Panel Admin Entreprise";
+                        btn.className = "m-4 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded text-xs font-bold transition";
+                        btn.onclick = () => window.location.href = '/caisse-nosignal/gestion-entreprise/';
+                        container.appendChild(btn);
+                    }
+                }
+                
                 // Sécurité : Vérification si des produits existent
                 if (!result.produits || result.produits.length === 0) {
-                    displayEmptyState(); // Appel de la nouvelle fonction propre
+                    displayEmptyState();
+                    dataProduitsGlobal = [];
                 } else {
                     dataProduitsGlobal = result.produits;
+                    loadingOverlay.classList.add('hidden');
                 }
         
                 dataProduitsGlobal = result.produits;
@@ -167,7 +190,121 @@
             fetchCaisseData();
         }
 
-        // ... (Veuillez remettre vos fonctions renderCaisseModule, addToCart, etc. ici)
+        function addToCart(productId) {
+                const product = dataProduitsGlobal.find(p => p.id == productId);
+                if (!product) return;
+            
+                const existing = cart.find(item => item.id == productId);
+                if (existing) {
+                    existing.quantite++;
+                } else {
+                    cart.push({ ...product, quantite: 1 });
+                }
+                updateCartUI();
+            }
+            
+            function removeFromCart(productId) {
+                cart = cart.filter(item => item.id != productId);
+                updateCartUI();
+            }
+            
+            function clearCart() {
+                cart = [];
+                updateCartUI();
+            }
+            
+            function updateCartUI() {
+                const container = document.getElementById('cart-items');
+                const totalEl = document.getElementById('cart-total');
+                const btnSubmit = document.getElementById('btn-validate-sale');
+                
+                container.innerHTML = "";
+                let total = 0;
+            
+                if (cart.length === 0) {
+                    container.innerHTML = '<p id="empty-cart-text" class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>';
+                    btnSubmit.disabled = true;
+                    btnSubmit.classList.replace('bg-emerald-600', 'bg-[#222]');
+                    btnSubmit.classList.replace('text-white', 'text-gray-500');
+                    btnSubmit.classList.add('cursor-not-allowed');
+                } else {
+                    cart.forEach(item => {
+                        total += (item.prixVente * item.quantite);
+                        container.innerHTML += `
+                            <div class="flex justify-between items-center text-sm">
+                                <div>
+                                    <p class="text-white">${item.nomProduit}</p>
+                                    <p class="text-xs text-gray-500">${item.quantite} x ${item.prixVente}$</p>
+                                </div>
+                                <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-400">✕</button>
+                            </div>
+                        `;
+                    });
+                    btnSubmit.disabled = false;
+                    btnSubmit.classList.replace('bg-[#222]', 'bg-emerald-600');
+                    btnSubmit.classList.replace('text-gray-500', 'text-white');
+                    btnSubmit.classList.remove('cursor-not-allowed');
+                }
+                totalEl.innerText = total.toFixed(2) + " $US";
+            }
+            
+            // --- FONCTIONS DE RENDU (UI) ---
+            
+            function renderCategories() {
+                const container = document.getElementById('categories-container');
+                const categories = ["TOUT", ...new Set(dataProduitsGlobal.map(p => p.categorie))];
+                
+                container.innerHTML = categories.map(cat => `
+                    <button onclick="filterProducts('${cat}')" class="px-4 py-2 rounded text-xs font-bold transition ${activeCategory === cat ? 'bg-white text-black' : 'bg-[#222] text-white hover:bg-[#333]'}">
+                        ${cat}
+                    </button>
+                `).join('');
+                
+                filterProducts(activeCategory);
+            }
+            
+            function filterProducts(cat) {
+                activeCategory = cat;
+                const grid = document.getElementById('products-grid');
+                const filtered = cat === "TOUT" ? dataProduitsGlobal : dataProduitsGlobal.filter(p => p.categorie === cat);
+                
+                grid.innerHTML = filtered.map(p => `
+                    <button onclick="addToCart(${p.id})" class="bg-[#222] p-4 rounded-lg text-left hover:border border-emerald-500 transition">
+                        <p class="font-bold">${p.nomProduit}</p>
+                        <p class="text-emerald-400 text-sm font-semibold mt-1">${p.prixVente} $US</p>
+                    </button>
+                `).join('');
+                
+                renderCategories(); // Rafraîchit les boutons catégories
+            }
+            
+            // --- SOUMISSION DE LA VENTE ---
+            
+            async function submitSale() {
+                if (cart.length === 0) return;
+                
+                const formData = new FormData();
+                formData.append('action', 'saveSale');
+                formData.append('data', JSON.stringify({
+                    userId: sessionData.userId,
+                    entrepriseId: document.getElementById('company-selector').value,
+                    cart: cart
+                }));
+            
+                try {
+                    const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert("Vente enregistrée avec succès !");
+                        clearCart();
+                    } else {
+                        alert("Erreur : " + result.message);
+                    }
+                } catch (e) {
+                    alert("Erreur technique : " + e.message);
+                }
+            }
     </script>
 </body>
 </html>
