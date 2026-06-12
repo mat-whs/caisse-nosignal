@@ -97,62 +97,59 @@
             showBlockError("Aucune session détectée. Veuillez vous reconnecter.");
         } else {
             async function fetchCaisseData() {
-                try {
+            try {
                 const formData = new FormData();
                 formData.append('action', 'getCaisseData');
                 formData.append('userId', sessionData.userId);
                 
                 const response = await fetch(CONFIG.API_URL, {
                     method: "POST",
-                    body: formData // On envoie en FormData, pas en JSON
+                    body: formData
                 });
                 
                 const result = await response.json();
                 
                 if (!result.success) {
-                    console.error("Erreur logique renvoyée par le serveur :", result.message);
                     showBlockError("Erreur serveur : " + result.message);
                     return;
                 }
         
-                // Si produits est vide, on initialise une liste vide au lieu de planter
-                dataProduitsGlobal = result.produits || []; 
-
+                // Sécurité : Vérification si des produits existent
+                if (!result.produits || result.produits.length === 0) {
+                    showBlockError("Aucun produit n'est configuré pour cette caisse.");
+                    return;
+                }
+        
+                dataProduitsGlobal = result.produits;
+                userRoleInfo = result.userRoleInfo; // Récupération des droits
+        
                 const compSelector = document.getElementById('company-selector');
                 if (compSelector) {
-                    compSelector.innerHTML = ""; // Vide le "Chargement..."
-                    
-                    // Remplissage du select
+                    compSelector.innerHTML = "";
                     result.entreprises.forEach(entreprise => {
                         const opt = document.createElement('option');
                         opt.value = entreprise.id;
                         opt.innerText = entreprise.nom;
                         compSelector.appendChild(opt);
                     });
-                
-                    // Optionnel : Restaurer la sélection précédente si elle existe
+                    
                     const savedCompany = localStorage.getItem('active_company_id');
                     if (savedCompany) compSelector.value = savedCompany;
-                
-                    // Sauvegarder lors d'un changement
-                    compSelector.addEventListener('change', (e) => {
-                        localStorage.setItem('active_company_id', e.target.value);
+                    
+                    compSelector.addEventListener('change', () => {
+                        localStorage.setItem('active_company_id', compSelector.value);
+                        renderAdminButton(); // Met à jour le bouton au changement
                     });
                 }
-                    
-                if (dataProduitsGlobal.length === 0) {
-                    console.warn("Aucun produit trouvé, mais le module continue de charger.");
-                }
-        
+                
+                renderAdminButton(); // Affichage initial du bouton
                 loadingOverlay.classList.add('hidden');
-                // Appel de vos fonctions de rendu ici (ex: renderCategories())
+                // renderCategories(); // Appelle tes fonctions de rendu ici
                     
             } catch (e) {
-                // Affiche l'erreur technique réelle au lieu d'un message générique
                 showBlockError("Détail technique : " + e.message); 
-                console.error("Erreur complète :", e);
-                }
             }
+        }
             fetchCaisseData();
         }
 
