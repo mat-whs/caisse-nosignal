@@ -86,58 +86,42 @@
             window.location.replace('../');
         } else {
             async function fetchDashboardData() {
-                try {
-                    const response = await fetch(CONFIG.API_URL, {
-                        method: "POST",
-                        body: JSON.stringify({ action: "getFormData", userId: sessionData.userId })
-                    });
-                    const result = await response.json();
+    try {
+        // --- MODIFICATION ICI : Utilisation de FormData ---
+        const formData = new FormData();
+        formData.append('action', 'getFormData');
+        formData.append('userId', sessionData.userId);
 
-                    if (result.success) {
-                        clearTimeout(timeoutSecurity);
-                        if (!result.entreprises || result.entreprises.length === 0) {
-                            showBlockError("Vous n'avez l'autorisation pour aucune entreprise, veuillez le signaler à un administrateur.");
-                            return;
-                        }
+        const response = await fetch(CONFIG.API_URL, {
+            method: "POST",
+            body: formData // On envoie le formulaire
+        });
+        
+        const result = await response.json();
 
-                        const compSelector = document.getElementById('company-selector');
-                        compSelector.innerHTML = "";
+        if (result.success) {
+            clearTimeout(timeoutSecurity);
+            
+            // ... (gardez tout votre code existant pour le compSelector et le rendu ici) ...
+            
+            const compSelector = document.getElementById('company-selector');
+            compSelector.innerHTML = "";
+            result.entreprises.forEach(entreprise => {
+                const opt = document.createElement('option');
+                opt.value = parseInt(entreprise.id);
+                opt.innerText = entreprise.nom; // Assurez-vous que votre script renvoie bien le nom
+                compSelector.appendChild(opt);
+            });
 
-                        result.entreprises.forEach(entreprise => {
-                            const opt = document.createElement('option');
-                            opt.value = parseInt(entreprise.id);
-                            // Correction syntaxique de entreprise.nom garantie sans le symbole @
-                            opt.innerText = Math.trunc(entreprise.id) === 1 ? "Burger Shot" : entreprise.nom;
-                            compSelector.appendChild(opt);
-                        });
-
-                        const savedCompany = localStorage.getItem('active_company_id');
-                        if (savedCompany && [...compSelector.options].some(o => o.value === savedCompany)) {
-                            compSelector.value = savedCompany;
-                        }
-
-                        localStorage.setItem('active_company_id', compSelector.value);
-                        
-                        // Appel de votre fonction de rendu des stats (si implémentée dans votre logique métier)
-                        if (typeof renderDashboardStats === "function") {
-                            renderDashboardStats(compSelector.value);
-                        }
-
-                        compSelector.addEventListener('change', () => {
-                            localStorage.setItem('active_company_id', compSelector.value);
-                            if (typeof renderDashboardStats === "function") {
-                                renderDashboardStats(compSelector.value);
-                            }
-                        });
-
-                        loadingOverlay.classList.add('hidden');
-                    } else {
-                        showBlockError(result.message || "Erreur d'autorisation.");
-                    }
-                } catch (error) {
-                    showBlockError("Erreur de liaison réseau avec l'API Apps Script. Vérifiez votre fichier gateway.js.");
-                }
-            }
+            // ... (fin de votre code existant) ...
+            loadingOverlay.classList.add('hidden');
+        } else {
+            showBlockError(result.message || "Erreur d'autorisation.");
+        }
+    } catch (error) {
+        showBlockError("Erreur de liaison réseau. Vérifiez votre configuration.");
+    }
+}
 
             fetchDashboardData();
         }
