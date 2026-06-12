@@ -54,5 +54,14 @@ async function editStock(id) {
     }
 }
 
+function addNewElement() {
+    const nom = prompt("Nom de l'élément :");
+    if (!nom) return;
+    
+    // Logique pour envoyer au serveur...
+    console.log("Ajout de :", nom);
+    alert("Fonctionnalité d'ajout bientôt disponible.");
+}
+
 // Lancement au chargement
 document.addEventListener('DOMContentLoaded', loadStockData);
