@@ -167,8 +167,8 @@
                         if (result.entreprises) {
                             result.entreprises.forEach(entreprise => {
                                 const opt = document.createElement('option');
-                                opt.value = entreprise.id;
-                                opt.innerText = $.nom || entreprise.nom; // Fallback sécurisé
+                                opt.value = enterprise.id;
+                                opt.innerText = entreprise.nom; // Correction ici : Suppression de $.nom
                                 htmlSelector.appendChild(opt);
                             });
                         }
