@@ -59,6 +59,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                             <span>🏢</span> <span>Gestion Entreprise</span>
                         </a>
                     ` : ''}
+
+                    ${isAdmin ? `
+                        <div class="pt-4 pb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest pl-3">Administration</div>
+                        <a href="${rootPath}admin/roles/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/roles') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>🔑</span> <span>Rôles</span>
+                        </a>
+                        <a href="${rootPath}admin/site/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/site') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>⚙️</span> <span>Site</span>
+                        </a>
+                        <a href="${rootPath}admin/utilisateurs/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/utilisateurs') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>👥</span> <span>Utilisateurs</span>
+                        </a>
+                    ` : ''}
                 </nav>
             </div>
             <div class="p-4 border-t border-[#222] flex items-center justify-between">
