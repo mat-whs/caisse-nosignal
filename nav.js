@@ -62,10 +62,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </nav>
             </div>
             <div class="p-4 border-t border-[#222] flex items-center justify-between">
-                <div><p class="font-bold text-white text-sm">${sessionData.username || 'Utilisateur'}</p><p class="text-[10px] text-gray-500">${roleLabel}</p></div>
+                <div><p class="font-bold text-white text-sm">${result.username || 'Utilisateur'}</p><p class="text-[10px] text-gray-500">${roleLabel}</p></div>
                 <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded cursor-pointer">Déconnexion</button>
             </div>
-        </aside>>`;
+        </aside>`;
 
         document.getElementById('btn-logout-nav').addEventListener('click', () => {
             localStorage.clear();
