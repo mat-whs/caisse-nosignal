@@ -7,8 +7,11 @@
     <script src="/caisse-nosignal/gateway.js"></script>
     <script src="/caisse-nosignal/nav.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Sécurité : si CONFIG n'est pas défini, on en met un par défaut ou on prévient
+        window.CONFIG = window.CONFIG || { API_URL: '' }; 
+    </script>
 </head>
-    
 <body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
 
     <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2"></div>
@@ -108,7 +111,6 @@
             fetchCaisseData();
         }
 
-        // --- Fonctions Panier ---
         function addToCart(productId) {
             const product = dataProduitsGlobal.find(p => p.id == productId);
             if (!product) return;
@@ -178,22 +180,34 @@
             const btn = document.getElementById('btn-validate-sale');
             btn.disabled = true; btn.innerText = "Enregistrement...";
             
-            const params = new URLSearchParams({
-                action: 'saveSale',
-                data: JSON.stringify({
-                    userId: sessionData.userId,
-                    entrepriseId: localStorage.getItem('active_company_id'),
-                    cart: cart
-                })
-            });
-
             try {
-                const response = await fetch(CONFIG.API_URL, { method: "POST", body: params });
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        action: 'saveSale',
+                        data: JSON.stringify({
+                            userId: sessionData.userId,
+                            entrepriseId: localStorage.getItem('active_company_id'),
+                            cart: cart
+                        })
+                    })
+                });
+                
                 const result = await response.json();
-                if (result.success) { showNotification("Vente enregistrée !"); clearCart(); }
-                else throw new Error(result.message);
-            } catch (e) { showNotification(e.message, true); }
-            finally { btn.disabled = false; btn.innerText = "Enregistrer la Vente"; }
+                
+                if (result.success) {
+                    showNotification("Vente enregistrée !");
+                    clearCart();
+                } else {
+                    throw new Error(result.message || "Erreur inconnue");
+                }
+            } catch (e) {
+                console.error("Erreur de sauvegarde :", e);
+                showNotification(e.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Enregistrer la Vente";
+            }
         }
     </script>
 </body>
