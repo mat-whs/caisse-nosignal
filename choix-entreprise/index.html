@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sélection de l'entreprise - NoSignal</title>
+    <script src="/caisse-nosignal/gateway.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#121212] text-[#f5f5f5] font-sans antialiased min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-[#1a1a1a] border border-[#262626] rounded-2xl p-8 space-y-6 shadow-2xl">
+        <div class="text-center space-y-2">
+            <h1 class="text-2xl font-black tracking-wider text-white uppercase">Caisse.<span class="font-light text-gray-400">NoSignal</span></h1>
+            <p class="text-xs text-gray-400 uppercase tracking-widest">Sélectionnez votre lieu de prise de service</p>
+        </div>
+
+        <div id="loading-box" class="py-8 flex flex-col items-center justify-center space-y-3">
+            <div class="w-8 h-8 border-2 border-t-transparent border-emerald-400 rounded-full animate-spin"></div>
+            <p class="text-xs text-gray-500 italic">Vérification de vos habilitations...</p>
+        </div>
+
+        <div id="companies-container" class="hidden flex flex-col gap-3">
+            </div>
+
+        <div class="text-center pt-2">
+            <button onclick="abortSelection()" class="text-xs text-gray-500 hover:text-red-400 transition cursor-pointer">
+                Retour à l'écran de connexion
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
+        const rootPath = "/caisse-nosignal/";
+
+        if (!sessionData) {
+            window.location.replace(rootPath);
+        } else {
+            fetchUserCompanies();
+        }
+
+        async function fetchUserCompanies() {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'getUserCompanies');
+                formData.append('userId', sessionData.userId);
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success && result.companies && result.companies.length > 0) {
+                    document.getElementById('loading-box').classList.add('hidden');
+                    const container = document.getElementById('companies-container');
+                    container.innerHTML = "";
+                    container.classList.remove('hidden');
+
+                    result.companies.forEach(company => {
+                        const btn = document.createElement('button');
+                        btn.className = "w-full bg-[#222] hover:bg-emerald-950/30 border border-[#333] hover:border-emerald-500/50 text-left font-bold text-sm p-4 rounded-xl transition cursor-pointer flex items-center justify-between group";
+                        btn.innerHTML = `
+                            <span class="text-gray-300 group-hover:text-white transition">${company.nom}</span>
+                            <span class="text-xs text-gray-600 group-hover:text-emerald-400 transition font-mono">ID #${company.id} ➔</span>
+                        `;
+                        btn.onclick = () => selectCompany(company.id);
+                        container.appendChild(btn);
+                    });
+                } else {
+                    document.getElementById('loading-box').innerHTML = `<p class="text-xs text-red-500 font-medium text-center">Aucune affectation active trouvée pour votre profil.</p>`;
+                }
+            } catch (error) {
+                document.getElementById('loading-box').innerHTML = `<p class="text-xs text-red-500 font-medium text-center">Erreur réseau lors du chargement.</p>`;
+            }
+        }
+
+        function selectCompany(companyId) {
+            localStorage.setItem('active_company_id', companyId);
+            window.location.replace(`${rootPath}dashboard/`);
+        }
+
+        function abortSelection() {
+            localStorage.clear();
+            window.location.replace(rootPath);
+        }
+    </script>
+</body>
+</html>
