@@ -111,7 +111,6 @@
                     params.append('action', 'getCaisseData');
                     params.append('userId', sessionData.userId);
                     
-                    // Récupération dynamique de l'entreprise active depuis le stockage local
                     const activeCompanyId = localStorage.getItem('active_company_id');
                     if (activeCompanyId) {
                         params.append('activeCompanyId', activeCompanyId);
@@ -168,8 +167,8 @@
                         if (result.entreprises) {
                             result.entreprises.forEach(entreprise => {
                                 const opt = document.createElement('option');
-                                opt.value = SolidId = entreprise.id;
-                                opt.innerText = entreprise.nom;
+                                opt.value = entreprise.id;
+                                opt.innerText = $.nom || entreprise.nom; // Fallback sécurisé
                                 htmlSelector.appendChild(opt);
                             });
                         }
@@ -205,6 +204,19 @@
             }
             updateCartUI();
         }
+
+        function updateQuantity(productId, newQty) {
+            const qty = parseInt(newQty, 10);
+            if (isNaN(qty) || qty <= 0) {
+                removeFromCart(productId);
+                return;
+            }
+            const item = cart.find(item => item.id == productId);
+            if (item) {
+                item.quantite = qty;
+            }
+            updateCartUI();
+        }
         
         function removeFromCart(productId) {
             cart = cart.filter(item => item.id != productId);
@@ -233,12 +245,17 @@
                 cart.forEach(item => {
                     total += (item.prix * item.quantite);
                     container.innerHTML += `
-                        <div class="flex justify-between items-center text-sm">
-                            <div>
-                                <p class="text-white">${item.nom}</p>
-                                <p class="text-xs text-gray-500">${item.quantite} x ${item.prix}$</p>
+                        <div class="flex justify-between items-center text-sm bg-[#161616] p-2 rounded border border-[#222]">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-white font-medium truncate">${item.nom}</p>
+                                <p class="text-xs text-gray-500">${item.prix}$ / unité</p>
                             </div>
-                            <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-400">✕</button>
+                            <div class="flex items-center space-x-3 shrink-0">
+                                <input type="number" min="1" value="${item.quantite}" 
+                                    onchange="updateQuantity(${item.id}, this.value)" 
+                                    class="w-14 bg-[#222] border border-[#333] text-white text-center rounded py-1 text-xs focus:outline-none focus:border-emerald-500">
+                                <button onclick="removeFromCart(${item.id})" class="text-gray-500 hover:text-red-400 transition text-xs">✕</button>
+                            </div>
                         </div>
                     `;
                 });
