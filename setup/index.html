@@ -2,32 +2,119 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Configuration de votre compte - Caisse NoSignal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration de votre compte - NoSignal</title>
     <script src="/caisse-nosignal/gateway.js"></script>
-    <script src="/caisse-nosignal/nav.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#1a1a1a] text-white flex items-center justify-center min-h-screen">
+<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-[#242424] p-8 rounded-lg shadow-xl w-full max-w-sm border border-[#333]">
-        <h1 class="text-xl font-bold mb-6">Initialisation du compte</h1>
-        <p class="text-sm text-gray-400 mb-6" id="welcome-msg">Configuration en cours...</p>
-        
-        <input type="password" id="new-password" placeholder="Nouveau mot de passe" class="w-full bg-[#161616] border border-[#444] p-3 rounded mb-4">
-        <button onclick="savePassword()" class="w-full bg-white text-black font-bold p-3 rounded">Valider</button>
+    <div class="bg-[#111] p-8 rounded-xl shadow-2xl w-full max-w-md border border-[#222] space-y-6">
+        <div class="space-y-2 text-center">
+            <h1 class="text-xl font-black uppercase tracking-wider text-white">Initialisation du compte</h1>
+            <p class="text-xs text-gray-500 uppercase tracking-widest">Sécurité & Accès</p>
+        </div>
+
+        <div id="status-box" class="bg-[#161616] border border-[#222] p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-400" id="welcome-msg">Vérification de la validité du lien...</p>
+        </div>
+
+        <form id="setup-form" class="hidden space-y-4" onsubmit="savePassword(e)">
+            <div>
+                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Nouveau mot de passe</label>
+                <input type="password" id="new-password" required placeholder="••••••••••••" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-3 text-sm focus:outline-none focus:border-gray-500">
+            </div>
+
+            <div>
+                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Confirmer le mot de passe</label>
+                <input type="password" id="confirm-password" required placeholder="••••••••••••" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-3 text-sm focus:outline-none focus:border-gray-500">
+            </div>
+
+            <button type="submit" class="w-full bg-white hover:bg-gray-200 text-black font-black text-sm py-3 rounded transition cursor-pointer uppercase tracking-wider">
+                Valider et Activer
+            </button>
+        </form>
     </div>
 
     <script>
-        // 1. Récupération des infos du lien (token et nom)
         const urlParams = new URLSearchParams(window.location.search);
-        const nom = urlParams.get('nom');
-        document.getElementById('welcome-msg').innerText = `Bonjour ${nom}, définissez votre mot de passe pour accéder à Caisse.NoSignal`;
+        const token = urlParams.get('token');
+        const welcomeMsg = document.getElementById('welcome-msg');
+        const setupForm = document.getElementById('setup-form');
 
-        function savePassword() {
+        // Validation immédiate du jeton au chargement
+        if (!token) {
+            showError("Jeton de configuration absent ou invalide.");
+        } else {
+            verifyToken();
+        }
+
+        async function verifyToken() {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'getUserSetupInfo');
+                formData.append('token', token);
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    welcomeMsg.innerHTML = `Bonjour <span class="text-white font-bold">${result.identifiant}</span>, définissez votre mot de passe pour accéder à votre espace NoSignal.`;
+                    setupForm.classList.remove('hidden');
+                } else {
+                    showError(result.message || "Lien d'initialisation expiré.");
+                }
+            } catch (error) {
+                showError("Erreur réseau lors de la validation du lien.");
+            }
+        }
+
+        document.getElementById('setup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
             const pass = document.getElementById('new-password').value;
-            // 2. Ici, vous feriez un fetch vers votre API Google Apps Script
-            // pour mettre à jour le mot de passe dans le CSV
-            alert("Compte configuré !");
+            const confirmPass = document.getElementById('confirm-password').value;
+
+            if (pass.length < 4) {
+                alert("Le mot de passe doit contenir au moins 4 caractères.");
+                return;
+            }
+
+            if (pass !== confirmPass) {
+                alert("Les mots de passe ne correspondent pas.");
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'completeSetupPassword');
+                formData.append('token', token);
+                formData.append('motDePasse', pass);
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    setupForm.remove();
+                    document.getElementById('status-box').className = "bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-lg text-center";
+                    welcomeMsg.innerHTML = `<span class="text-emerald-400 font-bold block mb-1">Compte configuré !</span> Vous pouvez maintenant fermer cette page et vous connecter.`;
+                } else {
+                    alert(result.message || "Une erreur est survenue.");
+                }
+            } catch (error) {
+                alert("Erreur réseau lors de la mise à jour.");
+            }
+        });
+
+        function showError(message) {
+            document.getElementById('status-box').className = "bg-red-950/40 border border-red-500/30 p-4 rounded-lg text-center";
+            welcomeMsg.innerHTML = `<span class="text-red-500 font-bold block mb-1">Lien Invalide</span> <span class="text-xs text-gray-400">${message}</span>`;
         }
     </script>
 </body>
