@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - NoSignal</title>
     <script src="gateway.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen flex items-center justify-center">
 
@@ -28,51 +32,60 @@
     </div>
 
 <script>
+    // Fonction de hachage SHA-512 côté client via l'API Web Crypto native
+    async function hashClientPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     // Vérifier la session dès le chargement de la page d'accueil
     const savedSession = localStorage.getItem('caisse_session');
     
     if (savedSession) {
         // Si une session existe, on redirige vers le dashboard
-        // Utilisez le chemin complet pour éviter les erreurs de dossier
         window.location.replace('/caisse-nosignal/dashboard/');
     }
     
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const userInp = document.getElementById('username').value;
-    const passInp = document.getElementById('password').value;
-    const errorTxt = document.getElementById('login-error');
-    
-    errorTxt.classList.add('hidden');
-    
-    // --- MODIFICATION ICI : Utilisation de FormData ---
-    const formData = new FormData();
-    formData.append('action', 'login');
-    formData.append('identifiant', userInp);
-    formData.append('motDePasse', passInp);
-    
-    try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: "POST",
-            body: formData // On envoie le formulaire au lieu du JSON
-        });
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        const result = await response.json();
+        const userInp = document.getElementById('username').value;
+        const passInp = document.getElementById('password').value;
+        const errorTxt = document.getElementById('login-error');
         
-        if (result.success) {
-            localStorage.setItem('caisse_session', JSON.stringify(result));
-            window.location.replace('/caisse-nosignal/dashboard/');
-        } else {
-            errorTxt.innerText = result.message;
+        errorTxt.classList.add('hidden');
+        
+        try {
+            // Hachage du mot de passe côté client avant l'envoi réseau
+            const hashedPass = await hashClientPassword(passInp);
+            
+            const formData = new FormData();
+            formData.append('action', 'login');
+            formData.append('identifiant', userInp);
+            formData.append('motDePasse', hashedPass); // Envoi de la valeur hachée
+            
+            const response = await fetch(CONFIG.API_URL, {
+                method: "POST",
+                body: formData 
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                localStorage.setItem('caisse_session', JSON.stringify(result));
+                window.location.replace('/caisse-nosignal/dashboard/');
+            } else {
+                errorTxt.innerText = result.message;
+                errorTxt.classList.remove('hidden');
+            }
+        } catch (error) {
+            errorTxt.innerText = "Erreur : Assurez-vous d'avoir redéployé le Code.gs.";
             errorTxt.classList.remove('hidden');
+            console.error(error);
         }
-    } catch (error) {
-        errorTxt.innerText = "Erreur : Assurez-vous d'avoir redéployé le Code.gs.";
-        errorTxt.classList.remove('hidden');
-        console.error(error);
-    }
-});
+    });
 </script>
 </body>
 </html>
