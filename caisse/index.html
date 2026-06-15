@@ -7,6 +7,12 @@
     <script src="/caisse-nosignal/gateway.js"></script>
     <script src="/caisse-nosignal/nav.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // CONFIGURATION : Remplace l'URL par l'URL de déploiement de ton Apps Script
+        const CONFIG = {
+            API_URL: "https://script.google.com/macros/s/TON_ID_DEPLOIEMENT/exec"
+        };
+    </script>
 </head>
 <body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
 
@@ -14,10 +20,8 @@
 
     <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
         <div id="loading-box" class="max-w-md space-y-6">
-            <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
-            <p id="loading-text" class="text-lg text-gray-300 font-medium tracking-wide">
-                Chargement du module de caisse...
-            </p>
+            <div class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
+            <p class="text-lg text-gray-300 font-medium tracking-wide">Chargement du module de caisse...</p>
         </div>
     </div>
 
@@ -28,13 +32,9 @@
             <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
                 <div class="flex items-center space-x-4">
                     <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active :</span>
-                    <span id="active-company-name" class="text-white font-bold bg-[#222] px-3 py-1.5 rounded border border-[#333]">
-                        Chargement...
-                    </span>
+                    <span id="active-company-name" class="text-white font-bold bg-[#222] px-3 py-1.5 rounded border border-[#333]">Chargement...</span>
                 </div>
-                <div id="caisse-status" class="text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-800/50 px-3 py-1 rounded">
-                    Mode Vente Actif
-                </div>
+                <div class="text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-800/50 px-3 py-1 rounded">Mode Vente Actif</div>
             </header>
 
             <div id="admin-actions-container"></div>
@@ -47,14 +47,12 @@
 
                 <div class="w-96 bg-[#111] border-l border-[#222] flex flex-col justify-between shrink-0">
                     <div class="p-4 border-b border-[#222] flex justify-between items-center bg-[#141414]">
-                        <h3 class="font-bold text-white tracking-wide flex items-center space-x-2">
-                            <span>🛒</span> <span>Ticket en cours</span>
-                        </h3>
+                        <h3 class="font-bold text-white tracking-wide flex items-center space-x-2"><span>🛒</span> <span>Ticket en cours</span></h3>
                         <button onclick="clearCart()" class="text-xs text-gray-500 hover:text-red-400 transition cursor-pointer">Vider</button>
                     </div>
 
                     <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3 content-start">
-                        <p id="empty-cart-text" class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>
+                        <p class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>
                     </div>
 
                     <div class="p-4 border-t border-[#222] bg-[#141414] space-y-4">
@@ -74,81 +72,48 @@
     <script>
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
         const loadingOverlay = document.getElementById('loading-overlay');
-        
         let dataProduitsGlobal = [];
         let cart = [];
         let activeCategory = "TOUT";
         
-        // Fonction de notification Toast
         function showNotification(message, isError = false) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `px-6 py-3 rounded-lg text-sm font-bold shadow-lg transition-all duration-300 transform translate-x-full ${isError ? 'bg-red-600' : 'bg-emerald-600'} text-white`;
             toast.innerText = message;
             container.appendChild(toast);
-            
             setTimeout(() => toast.classList.remove('translate-x-full'), 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-x-full');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-full'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
         
         function showBlockError(message) {
-            console.error("Erreur de module :", message);
             if (loadingOverlay) loadingOverlay.classList.add('hidden');
             showNotification("Erreur : " + message, true);
         }
-        
-        function displayEmptyState() {
-            const productsGrid = document.getElementById('products-grid');
-            if (productsGrid) {
-                productsGrid.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
-                        <span class="text-4xl mb-4">🛒</span>
-                        <p class="text-lg font-semibold">Pas d'éléments dans la caisse</p>
-                    </div>
-                `;
-            }
-            if (loadingOverlay) loadingOverlay.classList.add('hidden');
-        }
 
         if (!sessionData) {
-            showBlockError("Aucune session détectée. Veuillez vous reconnecter.");
+            showBlockError("Aucune session détectée.");
         } else {
             async function fetchCaisseData() {
                 try {
-                    const params = new URLSearchParams();
-                    params.append('action', 'getCaisseData');
-                    params.append('userId', sessionData.userId);
-                    
-                    const activeCompanyId = localStorage.getItem('active_company_id');
-                    if (activeCompanyId) params.append('activeCompanyId', activeCompanyId);
-                    
+                    const params = new URLSearchParams({
+                        action: 'getCaisseData',
+                        userId: sessionData.userId,
+                        activeCompanyId: localStorage.getItem('active_company_id') || ''
+                    });
                     const response = await fetch(CONFIG.API_URL, { method: "POST", body: params });
                     const result = await response.json();
-                    
-                    if (!result.success) {
-                        showBlockError(result.message);
-                        return;
-                    }
-
+                    if (!result.success) throw new Error(result.message);
                     dataProduitsGlobal = result.produits || [];
-                    renderCategories(); 
-                    
-                    const nameContainer = document.getElementById('active-company-name');
-                    if (nameContainer && result.entreprises?.length > 0) {
-                        nameContainer.innerText = result.entreprises[0].nom;
-                    }
-                    
-                    if (loadingOverlay) loadingOverlay.classList.add('hidden');
-                } catch (e) {
-                    showBlockError(e.message); 
-                }
+                    renderCategories();
+                    document.getElementById('active-company-name').innerText = result.entreprises?.[0]?.nom || "N/A";
+                    loadingOverlay.classList.add('hidden');
+                } catch (e) { showBlockError(e.message); }
             }
             fetchCaisseData();
         }
 
+        // --- Fonctions Panier ---
         function addToCart(productId) {
             const product = dataProduitsGlobal.find(p => p.id == productId);
             if (!product) return;
@@ -160,114 +125,80 @@
 
         function updateQuantity(productId, newQty) {
             const qty = parseInt(newQty, 10);
-            if (isNaN(qty) || qty <= 0) { removeFromCart(productId); return; }
-            const item = cart.find(item => item.id == productId);
-            if (item) item.quantite = qty;
+            if (isNaN(qty) || qty <= 0) { cart = cart.filter(i => i.id != productId); }
+            else { const item = cart.find(i => i.id == productId); if (item) item.quantite = qty; }
             updateCartUI();
         }
-        
-        function removeFromCart(productId) {
-            cart = cart.filter(item => item.id != productId);
-            updateCartUI();
-        }
-        
-        function clearCart() {
-            cart = [];
-            updateCartUI();
-        }
-        
+
+        function clearCart() { cart = []; updateCartUI(); }
+
         function updateCartUI() {
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total');
             const btnSubmit = document.getElementById('btn-validate-sale');
-            if (!container || !totalEl || !btnSubmit) return;
-            container.innerHTML = "";
-            let total = 0;
             if (cart.length === 0) {
                 container.innerHTML = '<p class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>';
                 btnSubmit.disabled = true;
                 btnSubmit.className = "w-full bg-[#222] border border-[#333] text-gray-500 py-3 rounded-lg font-bold transition uppercase tracking-wider text-sm cursor-not-allowed";
             } else {
-                cart.forEach(item => {
+                let total = 0;
+                container.innerHTML = cart.map(item => {
                     total += (item.prix * item.quantite);
-                    container.innerHTML += `
+                    return `
                         <div class="flex justify-between items-center text-sm bg-[#161616] p-2 rounded border border-[#222]">
-                            <div class="flex-1 min-w-0 pr-2">
-                                <p class="text-white font-medium truncate">${item.nom}</p>
-                                <p class="text-xs text-gray-500">${item.prix}$ / unité</p>
-                            </div>
+                            <div class="flex-1 min-w-0 pr-2"><p class="text-white font-medium truncate">${item.nom}</p></div>
                             <div class="flex items-center space-x-3 shrink-0">
                                 <input type="number" min="1" value="${item.quantite}" onchange="updateQuantity(${item.id}, this.value)" class="w-14 bg-[#222] border border-[#333] text-white text-center rounded py-1 text-xs focus:outline-none focus:border-emerald-500">
-                                <button onclick="removeFromCart(${item.id})" class="text-gray-500 hover:text-red-400 transition text-xs">✕</button>
+                                <button onclick="cart = cart.filter(i => i.id != ${item.id}); updateCartUI();" class="text-gray-500 hover:text-red-400 transition text-xs">✕</button>
                             </div>
-                        </div>
-                    `;
-                });
+                        </div>`;
+                }).join('');
                 btnSubmit.disabled = false;
                 btnSubmit.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold transition uppercase tracking-wider text-sm cursor-pointer";
+                totalEl.innerText = total.toFixed(2) + " $US";
             }
-            totalEl.innerText = total.toFixed(2) + " $US";
         }
-        
+
         function renderCategories() {
             const container = document.getElementById('categories-container');
-            if (!container) return;
-            const categories = ["TOUT", ...new Set(dataProduitsGlobal.map(p => p.categorie))];
-            container.innerHTML = categories.map(cat => `
-                <button onclick="filterProducts('${cat}')" class="px-4 py-2 rounded text-xs font-bold transition ${activeCategory === cat ? 'bg-white text-black' : 'bg-[#222] text-white hover:bg-[#333]'}">
+            const cats = ["TOUT", ...new Set(dataProduitsGlobal.map(p => p.categorie))];
+            container.innerHTML = cats.map(cat => `
+                <button onclick="activeCategory='${cat}'; filterProducts('${cat}')" class="px-4 py-2 rounded text-xs font-bold transition ${activeCategory === cat ? 'bg-white text-black' : 'bg-[#222] text-white hover:bg-[#333]'}">
                     ${cat}
-                </button>
-            `).join('');
+                </button>`).join('');
             filterProducts(activeCategory);
         }
-        
+
         function filterProducts(cat) {
-            activeCategory = cat;
             const grid = document.getElementById('products-grid');
-            if (!grid) return;
             const filtered = cat === "TOUT" ? dataProduitsGlobal : dataProduitsGlobal.filter(p => p.categorie === cat);
             grid.innerHTML = filtered.map(p => `
                 <button onclick="addToCart(${p.id})" class="bg-[#222] p-4 rounded-lg text-left hover:border border-emerald-500 transition">
                     <p class="font-bold">${p.nom}</p>
                     <p class="text-emerald-400 text-sm font-semibold mt-1">${p.prix} $US</p>
-                </button>
-            `).join('');
+                </button>`).join('');
         }
-        
-        async function submitSale() {
-            if (cart.length === 0) return;
-            const currentCompanyId = localStorage.getItem('active_company_id');
-            const formattedCart = cart.map(item => ({
-                id: item.id,
-                nom: item.nom, 
-                prix: item.prix,
-                quantite: item.quantite
-            }));
 
-            const params = new URLSearchParams();
-            params.append('action', 'saveSale');
-            params.append('data', JSON.stringify({
-                userId: sessionData.userId,
-                entrepriseId: currentCompanyId,
-                cart: formattedCart
-            }));
+        async function submitSale() {
+            const btn = document.getElementById('btn-validate-sale');
+            btn.disabled = true; btn.innerText = "Enregistrement...";
+            
+            const params = new URLSearchParams({
+                action: 'saveSale',
+                data: JSON.stringify({
+                    userId: sessionData.userId,
+                    entrepriseId: localStorage.getItem('active_company_id'),
+                    cart: cart
+                })
+            });
 
             try {
                 const response = await fetch(CONFIG.API_URL, { method: "POST", body: params });
                 const result = await response.json();
-                
-                // Log pour diagnostiquer l'erreur en console F12
-                console.log("DEBUG - Réponse serveur lors de la vente :", result);
-
-                if (result.success) {
-                    showNotification("Vente enregistrée avec succès !");
-                    clearCart();
-                } else {
-                    showNotification("Erreur : " + (result.message || "Erreur inconnue"), true);
-                }
-            } catch (e) {
-                showNotification("Erreur technique : " + e.message, true);
-            }
+                if (result.success) { showNotification("Vente enregistrée !"); clearCart(); }
+                else throw new Error(result.message);
+            } catch (e) { showNotification(e.message, true); }
+            finally { btn.disabled = false; btn.innerText = "Enregistrer la Vente"; }
         }
     </script>
 </body>
