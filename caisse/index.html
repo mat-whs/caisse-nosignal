@@ -82,15 +82,13 @@
         
         function showBlockError(message) {
             console.error("Erreur de module :", message);
-            loadingOverlay.classList.add('hidden');
-            // On garde l'affichage de l'erreur seulement si c'est une vraie erreur technique
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
             const errorDiv = document.createElement('div');
             errorDiv.className = "fixed top-4 right-4 bg-red-900 text-white p-4 rounded z-50 text-sm";
             errorDiv.innerText = "Erreur : " + message;
             document.body.appendChild(errorDiv);
         }
         
-        // Nouvelle fonction pour le message "Pas d'éléments"
         function displayEmptyState() {
             const productsGrid = document.getElementById('products-grid');
             if (productsGrid) {
@@ -101,215 +99,211 @@
                     </div>
                 `;
             }
-            loadingOverlay.classList.add('hidden');
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
         }
 
-        // SÉCURITÉ : Pas de redirection, juste un message d'erreur
         if (!sessionData) {
             showBlockError("Aucune session détectée. Veuillez vous reconnecter.");
         } else {
             async function fetchCaisseData() {
-            try {
-                const params = new URLSearchParams();
-                params.append('action', 'getCaisseData');
-                params.append('userId', sessionData.userId);
-                
-                const response = await fetch(CONFIG.API_URL, {
-                    method: "POST",
-                    body: params
-                });
-                
-                const result = await response.json();
-                
-                if (!result.success) {
-                    showBlockError("Erreur serveur : " + result.message);
-                    return;
-                }
-
-                dataProduitsGlobal = result.produits;
-                userRoleInfo = result.userRoleInfo;
-                
-                renderCategories(); 
-                renderAdminButton(); 
-                
-                loadingOverlay.classList.add('hidden');
-                
-                function renderAdminButton() {
-                    const container = document.getElementById('admin-actions-container');
-                    const compSelector = document.getElementById('company-selector');
-                    const currentCompId = compSelector ? compSelector.value : "";
+                try {
+                    const params = new URLSearchParams();
+                    params.append('action', 'getCaisseData');
+                    params.append('userId', sessionData.userId);
                     
-                    // Logique basée sur sessionData (disponible globalement)
-                    const entreprisesPatron = sessionData.entreprisesPatron ? sessionData.entreprisesPatron.split(',').map(id => id.trim()) : [];
-                    const isPatronOfActive = entreprisesPatron.includes(currentCompId);
-                    const isAdmin = sessionData.isAdmin === true;
-            
-                    container.innerHTML = ""; 
-                    
-                    if (isAdmin || isPatronOfActive) {
-                        const btn = document.createElement('button');
-                        btn.innerText = "Panel Admin Entreprise";
-                        btn.className = "m-4 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded text-xs font-bold transition";
-                        btn.onclick = () => window.location.href = '/caisse-nosignal/gestion-entreprise/';
-                        container.appendChild(btn);
+                    // Récupération dynamique de l'entreprise active depuis le stockage local
+                    const activeCompanyId = localStorage.getItem('active_company_id');
+                    if (activeCompanyId) {
+                        params.append('activeCompanyId', activeCompanyId);
                     }
-                }
-                
-                // Sécurité : Vérification si des produits existent
-                if (!result.produits || result.produits.length === 0) {
-                    displayEmptyState();
-                    dataProduitsGlobal = [];
-                } else {
+                    
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: "POST",
+                        body: params
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!result.success) {
+                        showBlockError("Erreur serveur : " + result.message);
+                        return;
+                    }
+
                     dataProduitsGlobal = result.produits;
-                    loadingOverlay.classList.add('hidden');
-                }
-        
-                dataProduitsGlobal = result.produits;
-                userRoleInfo = result.userRoleInfo; // Récupération des droits
-        
-                const compSelector = document.getElementById('company-selector');
-                if (compSelector) {
-                    compSelector.innerHTML = "";
-                    result.entreprises.forEach(entreprise => {
-                        const opt = document.createElement('option');
-                        opt.value = entreprise.id;
-                        opt.innerText = entreprise.nom;
-                        compSelector.appendChild(opt);
-                    });
+                    userRoleInfo = result.userRoleInfo;
                     
-                    const savedCompany = localStorage.getItem('active_company_id');
-                    if (savedCompany) compSelector.value = savedCompany;
+                    renderCategories(); 
                     
-                    compSelector.addEventListener('change', () => {
-                        localStorage.setItem('active_company_id', compSelector.value);
-                        renderAdminButton(); // Met à jour le bouton au changement
-                    });
-                }
+                    function renderAdminButton() {
+                        const container = document.getElementById('admin-actions-container');
+                        const htmlSelector = document.getElementById('company-selector');
+                        const currentCompId = htmlSelector ? htmlSelector.value : "";
+                        
+                        const entreprisesPatron = sessionData.entreprisesPatron ? sessionData.entreprisesPatron.split(',').map(id => id.trim()) : [];
+                        const isPatronOfActive = entreprisesPatron.includes(currentCompId);
+                        const isAdmin = sessionData.isAdmin === true;
                 
-                renderAdminButton(); // Affichage initial du bouton
-                loadingOverlay.classList.add('hidden');
-                // renderCategories(); // Appelle tes fonctions de rendu ici
+                        if (container) {
+                            container.innerHTML = ""; 
+                            if (isAdmin || isPatronOfActive) {
+                                const btn = document.createElement('button');
+                                btn.innerText = "Panel Admin Entreprise";
+                                btn.className = "m-4 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded text-xs font-bold transition";
+                                btn.onclick = () => window.location.href = '/caisse-nosignal/gestion-entreprise/';
+                                container.appendChild(btn);
+                            }
+                        }
+                    }
                     
-            } catch (e) {
-                showBlockError("Détail technique : " + e.message); 
+                    if (!result.produits || result.produits.length === 0) {
+                        displayEmptyState();
+                        dataProduitsGlobal = [];
+                    } else {
+                        dataProduitsGlobal = result.produits;
+                    }
+            
+                    const htmlSelector = document.getElementById('company-selector');
+                    if (htmlSelector) {
+                        htmlSelector.innerHTML = "";
+                        if (result.entreprises) {
+                            result.entreprises.forEach(entreprise => {
+                                const opt = document.createElement('option');
+                                opt.value = SolidId = entreprise.id;
+                                opt.innerText = entreprise.nom;
+                                htmlSelector.appendChild(opt);
+                            });
+                        }
+                        
+                        const savedCompany = localStorage.getItem('active_company_id');
+                        if (savedCompany) htmlSelector.value = savedCompany;
+                        
+                        htmlSelector.addEventListener('change', () => {
+                            localStorage.setItem('active_company_id', htmlSelector.value);
+                            renderAdminButton();
+                        });
+                    }
+                    
+                    renderAdminButton();
+                    if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                        
+                } catch (e) {
+                    showBlockError("Détail technique : " + e.message); 
+                }
             }
-        }
             fetchCaisseData();
         }
 
         function addToCart(productId) {
-                const product = dataProduitsGlobal.find(p => p.id == productId);
-                if (!product) return;
-            
-                const existing = cart.find(item => item.id == productId);
-                if (existing) {
-                    existing.quantite++;
-                } else {
-                    cart.push({ ...product, quantite: 1 });
-                }
-                updateCartUI();
+            const product = dataProduitsGlobal.find(p => p.id == productId);
+            if (!product) return;
+        
+            const existing = cart.find(item => item.id == productId);
+            if (existing) {
+                existing.quantite++;
+            } else {
+                cart.push({ ...product, quantite: 1 });
             }
+            updateCartUI();
+        }
+        
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id != productId);
+            updateCartUI();
+        }
+        
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+        }
+        
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+            const btnSubmit = document.getElementById('btn-validate-sale');
             
-            function removeFromCart(productId) {
-                cart = cart.filter(item => item.id != productId);
-                updateCartUI();
-            }
-            
-            function clearCart() {
-                cart = [];
-                updateCartUI();
-            }
-            
-            function updateCartUI() {
-                const container = document.getElementById('cart-items');
-                const totalEl = document.getElementById('cart-total');
-                const btnSubmit = document.getElementById('btn-validate-sale');
-                
-                container.innerHTML = "";
-                let total = 0;
-            
-                if (cart.length === 0) {
-                    container.innerHTML = '<p id="empty-cart-text" class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>';
-                    btnSubmit.disabled = true;
-                    btnSubmit.classList.replace('bg-emerald-600', 'bg-[#222]');
-                    btnSubmit.classList.replace('text-white', 'text-gray-500');
-                    btnSubmit.classList.add('cursor-not-allowed');
-                } else {
-                    cart.forEach(item => {
-                        total += (item.prix * item.quantite);
-                        container.innerHTML += `
-                            <div class="flex justify-between items-center text-sm">
-                                <div>
-                                    <p class="text-white">${item.nom}</p>
-                                    <p class="text-xs text-gray-500">${item.quantite} x ${item.prix}$</p>
-                                </div>
-                                <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-400">✕</button>
+            if (!container || !totalEl || !btnSubmit) return;
+            container.innerHTML = "";
+            let total = 0;
+        
+            if (cart.length === 0) {
+                container.innerHTML = '<p id="empty-cart-text" class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>';
+                btnSubmit.disabled = true;
+                btnSubmit.className = "w-full bg-[#222] border border-[#333] text-gray-500 py-3 rounded-lg font-bold transition uppercase tracking-wider text-sm cursor-not-allowed";
+            } else {
+                cart.forEach(item => {
+                    total += (item.prix * item.quantite);
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center text-sm">
+                            <div>
+                                <p class="text-white">${item.nom}</p>
+                                <p class="text-xs text-gray-500">${item.quantite} x ${item.prix}$</p>
                             </div>
-                        `;
-                    });
-                    btnSubmit.disabled = false;
-                    btnSubmit.classList.replace('bg-[#222]', 'bg-emerald-600');
-                    btnSubmit.classList.replace('text-gray-500', 'text-white');
-                    btnSubmit.classList.remove('cursor-not-allowed');
+                            <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-400">✕</button>
+                        </div>
+                    `;
+                });
+                btnSubmit.disabled = false;
+                btnSubmit.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold transition uppercase tracking-wider text-sm cursor-pointer";
+            }
+            totalEl.innerText = total.toFixed(2) + " $US";
+        }
+        
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            if (!container) return;
+            const categories = ["TOUT", ...new Set(dataProduitsGlobal.map(p => p.categorie))];
+            
+            container.innerHTML = categories.map(cat => `
+                <button onclick="filterProducts('${cat}')" class="px-4 py-2 rounded text-xs font-bold transition ${activeCategory === cat ? 'bg-white text-black' : 'bg-[#222] text-white hover:bg-[#333]'}">
+                    ${cat}
+                </button>
+            `).join('');
+            
+            filterProducts(activeCategory);
+        }
+        
+        function filterProducts(cat) {
+            activeCategory = cat;
+            const grid = document.getElementById('products-grid');
+            if (!grid) return;
+            const filtered = cat === "TOUT" ? dataProduitsGlobal : dataProduitsGlobal.filter(p => p.categorie === cat);
+            
+            grid.innerHTML = filtered.map(p => `
+                <button onclick="addToCart(${p.id})" class="bg-[#222] p-4 rounded-lg text-left hover:border border-emerald-500 transition">
+                    <p class="font-bold">${p.nom}</p>
+                    <p class="text-emerald-400 text-sm font-semibold mt-1">${p.prix} $US</p>
+                </button>
+            `).join('');
+        }
+        
+        async function submitSale() {
+            if (cart.length === 0) return;
+            
+            const htmlSelector = document.getElementById('company-selector');
+            const currentCompanyId = htmlSelector ? htmlSelector.value : localStorage.getItem('active_company_id');
+            
+            const formData = new FormData();
+            formData.append('action', 'saveSale');
+            formData.append('data', JSON.stringify({
+                userId: sessionData.userId,
+                entrepriseId: currentCompanyId,
+                cart: cart
+            }));
+        
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert("Vente enregistrée avec succès !");
+                    clearCart();
+                } else {
+                    alert("Erreur : " + result.message);
                 }
-                totalEl.innerText = total.toFixed(2) + " $US";
+            } catch (e) {
+                alert("Erreur technique : " + e.message);
             }
-            
-            // --- FONCTIONS DE RENDU (UI) ---
-            
-            function renderCategories() {
-                const container = document.getElementById('categories-container');
-                const categories = ["TOUT", ...new Set(dataProduitsGlobal.map(p => p.categorie))];
-                
-                container.innerHTML = categories.map(cat => `
-                    <button onclick="filterProducts('${cat}')" class="px-4 py-2 rounded text-xs font-bold transition ${activeCategory === cat ? 'bg-white text-black' : 'bg-[#222] text-white hover:bg-[#333]'}">
-                        ${cat}
-                    </button>
-                `).join('');
-                
-                filterProducts(activeCategory);
-            }
-            
-            function filterProducts(cat) {
-                activeCategory = cat;
-                const grid = document.getElementById('products-grid');
-                const filtered = cat === "TOUT" ? dataProduitsGlobal : dataProduitsGlobal.filter(p => p.categorie === cat);
-                
-                grid.innerHTML = filtered.map(p => `
-                    <button onclick="addToCart(${p.id})" class="bg-[#222] p-4 rounded-lg text-left hover:border border-emerald-500 transition">
-                        <p class="font-bold">${p.nom}</p>
-                        <p class="text-emerald-400 text-sm font-semibold mt-1">${p.prix} $US</p>
-                    </button>
-                `).join('');
-            }
-            
-            // --- SOUMISSION DE LA VENTE ---
-            
-            async function submitSale() {
-                if (cart.length === 0) return;
-                
-                const formData = new FormData();
-                formData.append('action', 'saveSale');
-                formData.append('data', JSON.stringify({
-                    userId: sessionData.userId,
-                    entrepriseId: document.getElementById('company-selector').value,
-                    cart: cart
-                }));
-            
-                try {
-                    const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        alert("Vente enregistrée avec succès !");
-                        clearCart();
-                    } else {
-                        alert("Erreur : " + result.message);
-                    }
-                } catch (e) {
-                    alert("Erreur technique : " + e.message);
-                }
-            }
+        }
     </script>
 </body>
 </html>
