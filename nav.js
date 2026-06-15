@@ -1,5 +1,5 @@
 window.navLoaded = new Promise((resolve) => {
-    window.renderNav = resolve;
+    window.renderNavDone = resolve;
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -103,6 +103,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     sidebarContainer.innerHTML = navHTML;
 
+    if (typeof window.renderNavDone === 'function') {
+        window.renderNavDone();
+    }
+    
     window.resolveNavReady();
     
     // Ajout du listener de déconnexion après l'injection
