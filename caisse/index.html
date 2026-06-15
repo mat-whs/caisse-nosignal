@@ -286,16 +286,30 @@
             
             const currentCompanyId = localStorage.getItem('active_company_id');
             
-            const formData = new FormData();
-            formData.append('action', 'saveSale');
-            formData.append('data', JSON.stringify({
+            // Formatage rigoureux du panier pour le serveur
+            const formattedCart = cart.map(item => ({
+                id: item.id || item.Id,
+                // Utilise item.nom ou item.NomProduit selon la structure stockée globalement
+                nom: item.nom || item.NomProduit, 
+                prix: item.prix || item.PrixVente,
+                quantite: item.quantite
+            }));
+        
+            // Utilisation de URLSearchParams pour correspondre à e.parameter côté serveur
+            const params = new URLSearchParams();
+            params.append('action', 'saveSale');
+            params.append('data', JSON.stringify({
                 userId: sessionData.userId,
                 entrepriseId: currentCompanyId,
-                cart: cart
+                cart: formattedCart
             }));
         
             try {
-                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const response = await fetch(CONFIG.API_URL, { 
+                    method: "POST", 
+                    body: params 
+                });
+                
                 const result = await response.json();
                 
                 if (result.success) {
