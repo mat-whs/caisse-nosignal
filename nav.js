@@ -39,22 +39,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         sidebarContainer.innerHTML = `
         <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between h-full shrink-0">
-            <div>
+            <div class="overflow-y-auto flex-1 custom-scrollbar">
                 <div class="p-6 border-b border-[#222]">
                     <span class="text-xl font-bold tracking-wider text-white">Caisse.<span class="font-light">NoSignal</span></span>
                 </div>
                 <nav class="p-4 space-y-1">
+                    <div class="pb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest pl-3">Espace Général</div>
+                    
                     <a href="${rootPath}dashboard/" class="flex items-center space-x-3 p-3 rounded ${isActive('dashboard') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
                         <span>📊</span> <span>Tableau de bord</span>
                     </a>
                     <a href="${rootPath}caisse/" class="flex items-center space-x-3 p-3 rounded ${isActive('caisse') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>🛒</span> <span>Caisse</span>
+                        <span>🛒</span> <span>Caisse (Ventes)</span>
                     </a>
                     <a href="${rootPath}stock/" class="flex items-center space-x-3 p-3 rounded ${isActive('stock') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>📦</span> <span>Stock</span>
+                        <span>📦</span> <span>Stock & Inventaire</span>
                     </a>
                     <a href="${rootPath}historique/" class="flex items-center space-x-3 p-3 rounded ${isActive('historique') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>⏳</span> <span>Historique</span>
+                        <span>⏳</span> <span>Historique Ventes</span>
+                    </a>
+                    <a href="${rootPath}pointage/" class="flex items-center space-x-3 p-3 rounded ${isActive('pointage') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                        <span>⏱️</span> <span>Prise de Service</span>
                     </a>
 
                     ${(isAdmin || isPatronOfActive) ? `
@@ -62,17 +67,30 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <a href="${rootPath}gestion-entreprise/" class="flex items-center space-x-3 p-3 rounded ${isActive('gestion-entreprise') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
                             <span>🏢</span> <span>Gestion Entreprise</span>
                         </a>
+                        <a href="${rootPath}primes/" class="flex items-center space-x-3 p-3 rounded ${isActive('primes') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>💰</span> <span>Suivi des Primes</span>
+                        </a>
                     ` : ''}
 
                     ${isAdmin ? `
                         <div class="pt-4 pb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest pl-3">Administration</div>
+                        <a href="${rootPath}admin/site/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/site') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>⚙️</span> <span>Configuration Site</span>
+                        </a>
                         <a href="${rootPath}admin/utilisateurs/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/utilisateurs') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
                             <span>👥</span> <span>Utilisateurs</span>
+                        </a>
+                        <a href="${rootPath}admin/roles/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/roles') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>🛡️</span> <span>Rôles & Droits</span>
+                        </a>
+                        <a href="${rootPath}admin/logs/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/logs') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
+                            <span>📋</span> <span>Logs Système</span>
                         </a>
                     ` : ''}
                 </nav>
             </div>
-            <div class="p-4 border-t border-[#222] flex items-center justify-between gap-2">
+            
+            <div class="p-4 border-t border-[#222] bg-[#0d0d0d] flex items-center justify-between gap-2 shrink-0">
                 <div class="min-w-0 flex-1">
                     <p class="font-bold text-white text-sm truncate">${result.username || 'Utilisateur'}</p>
                     <p class="text-[10px] text-gray-500">${roleLabel}</p>
@@ -87,6 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
         </aside>`;
 
+        // Listeners
         document.getElementById('btn-logout-nav').addEventListener('click', () => {
             localStorage.clear();
             window.location.replace(rootPath);
