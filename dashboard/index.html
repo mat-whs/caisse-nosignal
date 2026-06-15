@@ -61,11 +61,11 @@
 
     <script>
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
+        const activeCompanyId = localStorage.getItem('active_company_id');
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
         const loadingSpinner = document.getElementById('loading-spinner');
 
-        // Sécurité anti-blocage : Si l'API met plus de 10 secondes, on débloque l'interface
         const timeoutSecurity = setTimeout(() => {
             if (!loadingOverlay.classList.contains('hidden') && loadingSpinner) {
                 showBlockError("Le serveur Apps Script met trop de temps à répondre. Vérifiez le déploiement ou l'état de votre connexion.");
@@ -81,54 +81,67 @@
                                      <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 border border-[#333] text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour</button>`;
         }
 
-        if (!sessionData) {
-            window.location.replace('../');
+        if (!sessionData || !activeCompanyId) {
+            window.location.replace('/caisse-nosignal/choix-entreprise/');
         } else {
             async function fetchDashboardData() {
-    try {
-        // --- MODIFICATION ICI : Utilisation de FormData ---
-        const formData = new FormData();
-        formData.append('action', 'getDashboardData');
-        formData.append('userId', sessionData.userId);
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'getDashboardData');
+                    formData.append('userId', sessionData.userId);
+                    formData.append('activeCompanyId', activeCompanyId); // Correction : envoi requis pour passer le filtre
 
-        const response = await fetch(CONFIG.API_URL, {
-            method: "POST",
-            body: formData
-        });
-        
-        const result = await response.json();
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: "POST",
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
 
-        if (result.success) {
-            clearTimeout(timeoutSecurity);
-            
-            // ... (gardez tout votre code existant pour le compSelector et le rendu ici) ...
-            
-            const compSelector = document.getElementById('company-selector');
-            compSelector.innerHTML = "";
-            result.entreprises.forEach(entreprise => {
-                const opt = document.createElement('option');
-                opt.value = parseInt(entreprise.id);
-                opt.innerText = entreprise.nom; // Assurez-vous que votre script renvoie bien le nom
-                compSelector.appendChild(opt);
-            });
+                    if (result.success) {
+                        clearTimeout(timeoutSecurity);
+                        
+                        const compSelector = document.getElementById('company-selector');
+                        compSelector.innerHTML = "";
+                        
+                        result.entreprises.forEach(entreprise => {
+                            const opt = document.createElement('option');
+                            opt.value = entreprise.id;
+                            opt.innerText = entreprise.nom;
+                            if (String(entreprise.id) === String(activeCompanyId)) {
+                                opt.selected = true;
+                            }
+                            compSelector.appendChild(opt);
+                        });
 
-            // ... (fin de votre code existant) ...
-            loadingOverlay.classList.add('hidden');
-        } else {
-            showBlockError(result.message || "Erreur d'autorisation.");
-        }
-    } catch (error) {
-        showBlockError("Erreur de liaison réseau. Vérifiez votre configuration.");
-    }
-}
+                        // Événement de bascule dynamique d'établissement
+                        compSelector.addEventListener('change', (e) => {
+                            localStorage.setItem('active_company_id', e.target.value);
+                            window.location.reload();
+                        });
+
+                        // Rendu optionnel des statistiques retournées par l'API
+                        if (result.stats) {
+                            document.getElementById('stat-ca').innerText = (result.stats.ca || 0).toFixed(2) + " $";
+                            document.getElementById('stat-transactions').innerText = result.stats.transactions || 0;
+                            document.getElementById('stat-primes').innerText = (result.stats.primes || 0).toFixed(2) + " $";
+                        }
+
+                        loadingOverlay.classList.add('hidden');
+                    } else {
+                        showBlockError(result.message || "Erreur d'autorisation.");
+                    }
+                } catch (error) {
+                    showBlockError("Erreur de liaison réseau. Vérifiez votre configuration.");
+                }
+            }
 
             fetchDashboardData();
         }
 
         function logoutForce() {
-            localStorage.removeItem('caisse_session');
-            localStorage.removeItem('active_company_id');
-            window.location.replace('../');
+            localStorage.clear();
+            window.location.replace('/caisse-nosignal/');
         }
     </script>
 
