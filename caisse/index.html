@@ -25,10 +25,10 @@
         <main class="flex-1 bg-[#161616] flex flex-col min-w-0">
             <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
                 <div class="flex items-center space-x-4">
-                    <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active</span>
-                    <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
-                        <option>Chargement...</option>
-                    </select>
+                    <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active :</span>
+                    <span id="active-company-name" class="text-white font-bold bg-[#222] px-3 py-1.5 rounded border border-[#333]">
+                        Chargement...
+                    </span>
                 </div>
                 <div id="caisse-status" class="text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-800/50 px-3 py-1 rounded">
                     Mode Vente Actif
@@ -135,8 +135,7 @@
                     
                     function renderAdminButton() {
                         const container = document.getElementById('admin-actions-container');
-                        const htmlSelector = document.getElementById('company-selector');
-                        const currentCompId = htmlSelector ? htmlSelector.value : "";
+                        const currentCompId = localStorage.getItem('active_company_id') || "";
                         
                         const entreprisesPatron = sessionData.entreprisesPatron ? sessionData.entreprisesPatron.split(',').map(id => id.trim()) : [];
                         const isPatronOfActive = entreprisesPatron.includes(currentCompId);
@@ -161,25 +160,14 @@
                         dataProduitsGlobal = result.produits;
                     }
             
-                    const htmlSelector = document.getElementById('company-selector');
-                    if (htmlSelector) {
-                        htmlSelector.innerHTML = "";
-                        if (result.entreprises) {
-                            result.entreprises.forEach(entreprise => {
-                                const opt = document.createElement('option');
-                                opt.value = enterprise.id;
-                                opt.innerText = entreprise.nom; // Correction ici : Suppression de $.nom
-                                htmlSelector.appendChild(opt);
-                            });
+                    // Affichage du nom de l'entreprise courante renvoyée par le serveur
+                    const nameContainer = document.getElementById('active-company-name');
+                    if (nameContainer) {
+                        if (result.entreprises && result.entreprises.length > 0) {
+                            nameContainer.innerText = result.entreprises[0].nom;
+                        } else {
+                            nameContainer.innerText = "Inconnue";
                         }
-                        
-                        const savedCompany = localStorage.getItem('active_company_id');
-                        if (savedCompany) htmlSelector.value = savedCompany;
-                        
-                        htmlSelector.addEventListener('change', () => {
-                            localStorage.setItem('active_company_id', htmlSelector.value);
-                            renderAdminButton();
-                        });
                     }
                     
                     renderAdminButton();
@@ -296,8 +284,7 @@
         async function submitSale() {
             if (cart.length === 0) return;
             
-            const htmlSelector = document.getElementById('company-selector');
-            const currentCompanyId = htmlSelector ? htmlSelector.value : localStorage.getItem('active_company_id');
+            const currentCompanyId = localStorage.getItem('active_company_id');
             
             const formData = new FormData();
             formData.append('action', 'saveSale');
