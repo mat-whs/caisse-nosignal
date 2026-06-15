@@ -23,17 +23,6 @@
         <div id="sidebar-container" class="h-full shrink-0"></div>
 
         <main class="flex-1 bg-[#161616] flex flex-col min-w-0">
-            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
-                <div class="flex items-center space-x-4">
-                    <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Entreprise Active</span>
-                    <select id="company-selector" class="bg-[#222] border border-[#333] text-white rounded px-3 py-1.5 focus:outline-none cursor-pointer">
-                        <option>Chargement...</option>
-                    </select>
-                </div>
-                <div class="text-xs text-gray-400 bg-[#222] px-3 py-1 rounded">
-                    Vue d'ensemble
-                </div>
-            </header>
 
             <div class="flex-1 p-8 overflow-y-auto space-y-8">
                 <div>
@@ -101,7 +90,6 @@
                     if (result.success) {
                         clearTimeout(timeoutSecurity);
                         
-                        const compSelector = document.getElementById('company-selector');
                         compSelector.innerHTML = "";
                         
                         result.entreprises.forEach(entreprise => {
