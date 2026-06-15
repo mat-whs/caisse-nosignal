@@ -24,13 +24,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     let isAdmin = false;
     let entreprisesPatron = [];
 
-    // 2. Appel serveur pour obtenir les VRAIS droits
-    const formData = new FormData();
-    formData.append('action', 'checkAuth');
-    formData.append('userId', sessionData.userId);
-    formData.append('token', sessionData.token);
-
     try {
+        const formData = new FormData();
+        formData.append('action', 'checkAuth');
+        formData.append('userId', sessionData.userId);
+        formData.append('token', sessionData.token);
+        
         const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
         const result = await response.json();
         if (result.success) {
