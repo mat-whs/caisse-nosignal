@@ -10,12 +10,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    // Utilisation de la méthode JSONP pour éviter le blocage CORS
-    // On passe les paramètres en URL au lieu de FormData
-    const url = `${CONFIG.API_URL}?action=nav&userId=${sessionData.userId}&token=${sessionData.token}`;
-
     try {
-        const response = await fetch(url);
+        // --- MODIFICATION : Utilisation de FormData et requête POST comme le Dashboard ---
+        const formData = new FormData();
+        formData.append('action', 'nav');
+        formData.append('userId', sessionData.userId);
+        formData.append('token', sessionData.token);
+
+        const response = await fetch(CONFIG.API_URL, {
+            method: "POST",
+            body: formData
+        });
+        
         const result = await response.json();
 
         if (!result.success) throw new Error(result.message);
