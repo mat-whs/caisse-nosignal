@@ -10,59 +10,45 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    // Fonction de récupération des données de navigation
-    async function fetchNavData() {
-        try {
-            const formData = new FormData();
-            formData.append('action', 'nav');
-            formData.append('userId', sessionData.userId);
-            formData.append('token', sessionData.token);
+    // Utilisation de la méthode JSONP pour éviter le blocage CORS
+    // On passe les paramètres en URL au lieu de FormData
+    const url = `${CONFIG.API_URL}?action=nav&userId=${sessionData.userId}&token=${sessionData.token}`;
 
-            const response = await fetch(CONFIG.API_URL, {
-                method: "POST",
-                body: formData
-            });
+    try {
+        const response = await fetch(url);
+        const result = await response.json();
 
-            return await response.json();
-        } catch (error) {
-            console.error("Erreur réseau navigation :", error);
-            return { success: false };
-        }
-    }
+        if (!result.success) throw new Error(result.message);
 
-    const result = await fetchNavData();
+        const isAdmin = result.isAdmin;
+        const entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
+        const isPatronOfActive = entreprisesPatron.includes(String(activeCompanyId));
+        const rootPath = "/caisse-nosignal/";
+        const isActive = (folder) => window.location.pathname.includes(`/${folder}/`);
+        const roleLabel = isAdmin ? "Administrateur" : (isPatronOfActive ? "Patron" : "Employé");
 
-    if (!result.success) {
-        sidebarContainer.innerHTML = `<p class="p-4 text-red-500 text-xs">Erreur de chargement</p>`;
-        return;
-    }
-
-    const isAdmin = result.isAdmin;
-    const entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
-    
-    // Rendu du HTML (identique à ton code original)
-    const isPatronOfActive = entreprisesPatron.includes(String(activeCompanyId));
-    const path = window.location.pathname;
-    const rootPath = "/caisse-nosignal/";
-    const isActive = (folder) => path.includes(`/${folder}/`);
-    const roleLabel = isAdmin ? "Administrateur" : (isPatronOfActive ? "Patron" : "Employé");
-
-    sidebarContainer.innerHTML = `
-    <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between h-full shrink-0">
-        <div class="p-4 border-t border-[#222] flex items-center justify-between">
-            <div class="min-w-0 flex-1 pr-2">
-                <p class="font-bold text-white text-sm truncate">${sessionData.username || 'Utilisateur'}</p>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wider">${roleLabel}</p>
+        sidebarContainer.innerHTML = `
+        <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between h-full shrink-0">
+            <nav class="p-4 space-y-1">
+                <a href="${rootPath}dashboard/" class="flex items-center space-x-3 p-3 rounded ${isActive('dashboard') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">📊 <span>Tableau de bord</span></a>
+                <a href="${rootPath}caisse/" class="flex items-center space-x-3 p-3 rounded ${isActive('caisse') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">🛒 <span>Caisse</span></a>
+                <a href="${rootPath}stock/" class="flex items-center space-x-3 p-3 rounded ${isActive('stock') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">📦 <span>Stock</span></a>
+                <a href="${rootPath}historique/" class="flex items-center space-x-3 p-3 rounded ${isActive('historique') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">⏳ <span>Historique</span></a>
+                ${(isAdmin || isPatronOfActive) ? `<a href="${rootPath}gestion-entreprise/" class="flex items-center space-x-3 p-3 rounded ${isActive('gestion-entreprise') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">🏢 <span>Gestion Entreprise</span></a>` : ''}
+            </nav>
+            <div class="p-4 border-t border-[#222] flex items-center justify-between">
+                <div><p class="font-bold text-white text-sm">${sessionData.username || 'Utilisateur'}</p><p class="text-[10px] text-gray-500">${roleLabel}</p></div>
+                <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded cursor-pointer">Déconnexion</button>
             </div>
-            <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
-        </div>
-    </aside>`;
+        </aside>`;
 
-    document.getElementById('btn-logout-nav').addEventListener('click', () => {
-        localStorage.removeItem('caisse_session');
-        localStorage.removeItem('active_company_id');
-        window.location.replace(rootPath);
-    });
+        document.getElementById('btn-logout-nav').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.replace(rootPath);
+        });
 
-    if (typeof window.renderNavDone === 'function') window.renderNavDone();
+    } catch (e) {
+        console.error("Erreur navigation :", e);
+        sidebarContainer.innerHTML = `<p class="p-4 text-red-500 text-xs">Accès refusé ou erreur serveur.</p>`;
+    }
 });
