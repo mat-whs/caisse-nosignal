@@ -1,17 +1,7 @@
-window.navLoaded = new Promise((resolve) => {
-    window.renderNavDone = resolve;
-});
-
 document.addEventListener("DOMContentLoaded", async () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
 
-    let retries = 0;
-    while (typeof CONFIG === 'undefined' && retries < 10) {
-        await new Promise(r => setTimeout(r, 100));
-        retries++;
-    }
-    
     const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
     const activeCompanyId = localStorage.getItem('active_company_id');
 
@@ -19,14 +9,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.replace('/caisse-nosignal/');
         return;
     }
-
+    
     // 1. Initialisation des variables par défaut
     let isAdmin = false;
     let entreprisesPatron = [];
 
     try {
         const formData = new FormData();
-        formData.append('action', 'checkAuth');
+        formData.append('action', 'nav');
         formData.append('userId', sessionData.userId);
         formData.append('token', sessionData.token);
         
@@ -38,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
         }
     } catch (e) {
-        console.error("Erreur auth :", e);
+        console.error("Erreur nav :", e);
     }
     
     // 3. Calcul des permissions
@@ -101,12 +91,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     sidebarContainer.innerHTML = navHTML;
+    
+    window.resolveNavReady();
 
     if (typeof window.renderNavDone === 'function') {
         window.renderNavDone();
     }
-    
-    window.resolveNavReady();
     
     // Ajout du listener de déconnexion après l'injection
     document.getElementById('btn-logout-nav').addEventListener('click', () => {
