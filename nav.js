@@ -91,8 +91,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     sidebarContainer.innerHTML = navHTML;
-    
-    window.resolveNavReady();
 
     if (typeof window.renderNavDone === 'function') {
         window.renderNavDone();
