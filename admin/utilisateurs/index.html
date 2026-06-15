@@ -73,7 +73,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body" class="divide-y divide-[#222]/50 text-gray-300">
-                                    </tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -89,25 +89,25 @@
                                 <input type="text" id="targetIdentifiant" required class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none focus:border-gray-500">
                             </div>
 
-                            <div>
-                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Rôle principal</label>
-                                <select id="targetRole" required class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none cursor-pointer">
-                                    </select>
+                            <div class="space-y-2">
+                                <label class="block text-xs uppercase font-bold text-gray-400">Entreprises Autorisées</label>
+                                <div id="container-chk-autorisee" class="flex flex-wrap gap-3 p-2 bg-[#161616] border border-[#222] rounded min-h-[40px]">
+                                    </div>
+                                <input type="text" id="targetEntreprisesAutorisees" placeholder="Saisie manuelle si non présente dans la liste" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-xs focus:outline-none focus:border-gray-500">
                             </div>
 
-                            <div>
-                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Entreprises Autorisées (Séparées par des virgules)</label>
-                                <input type="text" id="targetEntreprisesAutorisees" placeholder="Ex: 1, 2" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none">
+                            <div class="space-y-2">
+                                <label class="block text-xs uppercase font-bold text-gray-400">Entreprises Patron</label>
+                                <div id="container-chk-patron" class="flex flex-wrap gap-3 p-2 bg-[#161616] border border-[#222] rounded min-h-[40px]">
+                                    </div>
+                                <input type="text" id="targetEntreprisesPatron" placeholder="Saisie manuelle si non présente dans la liste" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-xs focus:outline-none focus:border-gray-500">
                             </div>
 
-                            <div>
-                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Entreprises Patron (Séparées par des virgules)</label>
-                                <input type="text" id="targetEntreprisesPatron" placeholder="Ex: 1" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Entreprises Partenaire (Séparées par des virgules)</label>
-                                <input type="text" id="targetEntreprisesPartenaire" placeholder="Ex: 2" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none">
+                            <div class="space-y-2">
+                                <label class="block text-xs uppercase font-bold text-gray-400">Entreprises Partenaire</label>
+                                <div id="container-chk-partenaire" class="flex flex-wrap gap-3 p-2 bg-[#161616] border border-[#222] rounded min-h-[40px]">
+                                    </div>
+                                <input type="text" id="targetEntreprisesPartenaire" placeholder="Saisie manuelle si non présente dans la liste" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-xs focus:outline-none focus:border-gray-500">
                             </div>
 
                             <div class="flex items-center space-x-3 pt-2">
@@ -138,8 +138,8 @@
         const loadingSpinner = document.getElementById('loading-spinner');
         
         let cachedUsers = [];
+        let cachedCompanies = [];
 
-        // Sécurité timeout API
         const timeoutSecurity = setTimeout(() => {
             if (!loadingOverlay.classList.contains('hidden') && loadingSpinner) {
                 showBlockError("Le serveur Apps Script met trop de temps à répondre. Vérifiez votre connexion.");
@@ -174,18 +174,9 @@
                     if (result.success) {
                         clearTimeout(timeoutSecurity);
                         cachedUsers = result.users;
-
-                        // Remplir le sélecteur de rôles du formulaire
-                        const roleSelector = document.getElementById('targetRole');
-                        roleSelector.innerHTML = '<option value="">-- Choisir un rôle --</option>';
-                        result.roles.forEach(role => {
-                            const opt = document.createElement('option');
-                            opt.value = role.nom;
-                            opt.innerText = role.nom;
-                            roleSelector.appendChild(opt);
-                        });
-
-                        // Rendre la liste des utilisateurs
+                        cachedCompanies = result.entreprises || [];
+                        
+                        buildDynamicCheckboxes(cachedCompanies);
                         renderUsersTable(result.users);
                         loadingOverlay.classList.add('hidden');
                     } else {
@@ -197,6 +188,34 @@
             }
 
             fetchAdminUsersData();
+        }
+
+        function buildDynamicCheckboxes(companies) {
+            const sections = [
+                { id: 'container-chk-autorisee', class: 'chk-autorisee' },
+                { id: 'container-chk-patron', class: 'chk-patron' },
+                { id: 'container-chk-partenaire', class: 'chk-partenaire' }
+            ];
+
+            sections.forEach(sec => {
+                const container = document.getElementById(sec.id);
+                container.innerHTML = "";
+                
+                if(companies.length === 0) {
+                    container.innerHTML = `<span class="text-xs text-gray-600 italic">Aucune entreprise trouvée</span>`;
+                    return;
+                }
+
+                companies.forEach(c => {
+                    const label = document.createElement('label');
+                    label.className = "inline-flex items-center space-x-2 text-xs text-gray-300 cursor-pointer hover:text-white transition";
+                    label.innerHTML = `
+                        <input type="checkbox" value="${c.id}" class="${sec.class} w-3.5 h-3.5 rounded bg-[#1c1c1c] border-[#333] text-emerald-500 focus:ring-0">
+                        <span>${c.nom}</span>
+                    `;
+                    container.appendChild(label);
+                });
+            });
         }
 
         function renderUsersTable(users) {
@@ -231,7 +250,6 @@
             });
         }
 
-        // Charger les données actuelles de l'utilisateur ciblé dans le formulaire
         function loadUserIntoForm(userId) {
             const user = cachedUsers.find(u => u.id.toString() === userId.toString());
             if (!user) return;
@@ -239,11 +257,28 @@
             document.getElementById('form-title').innerText = `Modifier l'utilisateur #${user.id}`;
             document.getElementById('targetUserId').value = user.id;
             document.getElementById('targetIdentifiant').value = user.identifiant;
-            document.getElementById('targetRole').value = user.role;
-            document.getElementById('targetEntreprisesAutorisees').value = user.entreprisesAutorisees;
-            document.getElementById('targetEntreprisesPatron').value = user.entreprisesPatron;
-            document.getElementById('targetEntreprisesPartenaire').value = user.entreprisesPartenaire;
             document.getElementById('targetIsAdmin').checked = user.admin;
+
+            document.querySelectorAll('.chk-autorisee, .chk-patron, .chk-partenaire').forEach(c => c.checked = false);
+
+            const mapSectionValues = (rawData, checkboxClass, inputId) => {
+                const elements = (rawData || "").split(',').map(s => s.trim()).filter(Boolean);
+                let manualEntries = [];
+                
+                elements.forEach(val => {
+                    const checkbox = document.querySelector(`.${checkboxClass}[value="${val}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    } else {
+                        manualEntries.push(val);
+                    }
+                });
+                document.getElementById(inputId).value = manualEntries.join(', ');
+            };
+
+            mapSectionValues(user.entreprisesAutorisees, 'chk-autorisee', 'targetEntreprisesAutorisees');
+            mapSectionValues(user.entreprisesPatron, 'chk-patron', 'targetEntreprisesPatron');
+            mapSectionValues(user.entreprisesPartenaire, 'chk-partenaire', 'targetEntreprisesPartenaire');
             
             document.getElementById('targetIdentifiant').focus();
         }
@@ -252,12 +287,25 @@
             document.getElementById('form-title').innerText = "Créer un utilisateur";
             document.getElementById('targetUserId').value = "";
             document.getElementById('user-form').reset();
+            document.querySelectorAll('.chk-autorisee, .chk-patron, .chk-partenaire').forEach(c => c.checked = false);
         }
 
-        // Soumission et enregistrement (Création / Modification)
         document.getElementById('user-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             loadingOverlay.classList.remove('hidden');
+
+            const getSectionFinalValue = (checkboxClass, inputId) => {
+                const checkedValues = Array.from(document.querySelectorAll(`.${checkboxClass}:checked`)).map(c => c.value);
+                if (checkedValues.length > 0) {
+                    return checkedValues.join(', ');
+                } else {
+                    return document.getElementById(inputId).value.trim();
+                }
+            };
+
+            const authFinal = getSectionFinalValue('chk-autorisee', 'targetEntreprisesAutorisees');
+            const patronFinal = getSectionFinalValue('chk-patron', 'targetEntreprisesPatron');
+            const partenaireFinal = getSectionFinalValue('chk-partenaire', 'targetEntreprisesPartenaire');
 
             try {
                 const formData = new FormData();
@@ -265,10 +313,9 @@
                 formData.append('userId', sessionData.userId);
                 formData.append('targetUserId', document.getElementById('targetUserId').value);
                 formData.append('targetIdentifiant', document.getElementById('targetIdentifiant').value);
-                formData.append('targetRole', document.getElementById('targetRole').value);
-                formData.append('targetEntreprisesAutorisees', document.getElementById('targetEntreprisesAutorisees').value);
-                formData.append('targetEntreprisesPatron', document.getElementById('targetEntreprisesPatron').value);
-                formData.append('targetEntreprisesPartenaire', document.getElementById('targetEntreprisesPartenaire').value);
+                formData.append('targetEntreprisesAutorisees', authFinal);
+                formData.append('targetEntreprisesPatron', patronFinal);
+                formData.append('targetEntreprisesPartenaire', partenaireFinal);
                 formData.append('targetIsAdmin', document.getElementById('targetIsAdmin').checked ? "true" : "false");
 
                 const response = await fetch(CONFIG.API_URL, {
@@ -290,10 +337,8 @@
             }
         });
 
-        // Génération du lien de configuration de mot de passe
         async function askPasswordLink(targetId) {
             try {
-                // Déduction dynamique de la base URL
                 const baseUrl = window.location.origin + window.location.pathname.split('/admin/')[0] + '/';
                 
                 const formData = new FormData();
@@ -317,7 +362,6 @@
                     linkBox.classList.remove('hidden');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                    // Gestionnaire de copie
                     copyBtn.onclick = function() {
                         navigator.clipboard.writeText(result.setupLink).then(() => {
                             const originalText = copyBtn.innerHTML;
