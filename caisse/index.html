@@ -10,6 +10,8 @@
 </head>
 <body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
 
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2"></div>
+
     <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
         <div id="loading-box" class="max-w-md space-y-6">
             <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
@@ -72,21 +74,30 @@
     <script>
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
         const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingText = document.getElementById('loading-text');
-        const loadingSpinner = document.getElementById('loading-spinner');
         
         let dataProduitsGlobal = [];
         let cart = [];
         let activeCategory = "TOUT";
-        let userRoleInfo = null;
+        
+        // Fonction de notification Toast
+        function showNotification(message, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-6 py-3 rounded-lg text-sm font-bold shadow-lg transition-all duration-300 transform translate-x-full ${isError ? 'bg-red-600' : 'bg-emerald-600'} text-white`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
         
         function showBlockError(message) {
             console.error("Erreur de module :", message);
             if (loadingOverlay) loadingOverlay.classList.add('hidden');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = "fixed top-4 right-4 bg-red-900 text-white p-4 rounded z-50 text-sm";
-            errorDiv.innerText = "Erreur : " + message;
-            document.body.appendChild(errorDiv);
+            showNotification("Erreur : " + message, true);
         }
         
         function displayEmptyState() {
@@ -112,69 +123,27 @@
                     params.append('userId', sessionData.userId);
                     
                     const activeCompanyId = localStorage.getItem('active_company_id');
-                    if (activeCompanyId) {
-                        params.append('activeCompanyId', activeCompanyId);
-                    }
+                    if (activeCompanyId) params.append('activeCompanyId', activeCompanyId);
                     
-                    const response = await fetch(CONFIG.API_URL, {
-                        method: "POST",
-                        body: params
-                    });
-                    
+                    const response = await fetch(CONFIG.API_URL, { method: "POST", body: params });
                     const result = await response.json();
                     
                     if (!result.success) {
-                        showBlockError("Erreur serveur : " + result.message);
+                        showBlockError(result.message);
                         return;
                     }
 
-                    dataProduitsGlobal = result.produits;
-                    userRoleInfo = result.userRoleInfo;
-                    
+                    dataProduitsGlobal = result.produits || [];
                     renderCategories(); 
                     
-                    function renderAdminButton() {
-                        const container = document.getElementById('admin-actions-container');
-                        const currentCompId = localStorage.getItem('active_company_id') || "";
-                        
-                        const entreprisesPatron = sessionData.entreprisesPatron ? sessionData.entreprisesPatron.split(',').map(id => id.trim()) : [];
-                        const isPatronOfActive = entreprisesPatron.includes(currentCompId);
-                        const isAdmin = sessionData.isAdmin === true;
-                
-                        if (container) {
-                            container.innerHTML = ""; 
-                            if (isAdmin || isPatronOfActive) {
-                                const btn = document.createElement('button');
-                                btn.innerText = "Panel Admin Entreprise";
-                                btn.className = "m-4 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded text-xs font-bold transition";
-                                btn.onclick = () => window.location.href = '/caisse-nosignal/gestion-entreprise/';
-                                container.appendChild(btn);
-                            }
-                        }
-                    }
-                    
-                    if (!result.produits || result.produits.length === 0) {
-                        displayEmptyState();
-                        dataProduitsGlobal = [];
-                    } else {
-                        dataProduitsGlobal = result.produits;
-                    }
-            
-                    // Affichage du nom de l'entreprise courante renvoyée par le serveur
                     const nameContainer = document.getElementById('active-company-name');
-                    if (nameContainer) {
-                        if (result.entreprises && result.entreprises.length > 0) {
-                            nameContainer.innerText = result.entreprises[0].nom;
-                        } else {
-                            nameContainer.innerText = "Inconnue";
-                        }
+                    if (nameContainer && result.entreprises?.length > 0) {
+                        nameContainer.innerText = result.entreprises[0].nom;
                     }
                     
-                    renderAdminButton();
                     if (loadingOverlay) loadingOverlay.classList.add('hidden');
-                        
                 } catch (e) {
-                    showBlockError("Détail technique : " + e.message); 
+                    showBlockError(e.message); 
                 }
             }
             fetchCaisseData();
@@ -183,26 +152,17 @@
         function addToCart(productId) {
             const product = dataProduitsGlobal.find(p => p.id == productId);
             if (!product) return;
-        
             const existing = cart.find(item => item.id == productId);
-            if (existing) {
-                existing.quantite++;
-            } else {
-                cart.push({ ...product, quantite: 1 });
-            }
+            if (existing) existing.quantite++;
+            else cart.push({ ...product, quantite: 1 });
             updateCartUI();
         }
 
         function updateQuantity(productId, newQty) {
             const qty = parseInt(newQty, 10);
-            if (isNaN(qty) || qty <= 0) {
-                removeFromCart(productId);
-                return;
-            }
+            if (isNaN(qty) || qty <= 0) { removeFromCart(productId); return; }
             const item = cart.find(item => item.id == productId);
-            if (item) {
-                item.quantite = qty;
-            }
+            if (item) item.quantite = qty;
             updateCartUI();
         }
         
@@ -220,13 +180,11 @@
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total');
             const btnSubmit = document.getElementById('btn-validate-sale');
-            
             if (!container || !totalEl || !btnSubmit) return;
             container.innerHTML = "";
             let total = 0;
-        
             if (cart.length === 0) {
-                container.innerHTML = '<p id="empty-cart-text" class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>';
+                container.innerHTML = '<p class="text-sm text-gray-600 text-center py-8 italic">Le panier est vide</p>';
                 btnSubmit.disabled = true;
                 btnSubmit.className = "w-full bg-[#222] border border-[#333] text-gray-500 py-3 rounded-lg font-bold transition uppercase tracking-wider text-sm cursor-not-allowed";
             } else {
@@ -239,9 +197,7 @@
                                 <p class="text-xs text-gray-500">${item.prix}$ / unité</p>
                             </div>
                             <div class="flex items-center space-x-3 shrink-0">
-                                <input type="number" min="1" value="${item.quantite}" 
-                                    onchange="updateQuantity(${item.id}, this.value)" 
-                                    class="w-14 bg-[#222] border border-[#333] text-white text-center rounded py-1 text-xs focus:outline-none focus:border-emerald-500">
+                                <input type="number" min="1" value="${item.quantite}" onchange="updateQuantity(${item.id}, this.value)" class="w-14 bg-[#222] border border-[#333] text-white text-center rounded py-1 text-xs focus:outline-none focus:border-emerald-500">
                                 <button onclick="removeFromCart(${item.id})" class="text-gray-500 hover:text-red-400 transition text-xs">✕</button>
                             </div>
                         </div>
@@ -257,13 +213,11 @@
             const container = document.getElementById('categories-container');
             if (!container) return;
             const categories = ["TOUT", ...new Set(dataProduitsGlobal.map(p => p.categorie))];
-            
             container.innerHTML = categories.map(cat => `
                 <button onclick="filterProducts('${cat}')" class="px-4 py-2 rounded text-xs font-bold transition ${activeCategory === cat ? 'bg-white text-black' : 'bg-[#222] text-white hover:bg-[#333]'}">
                     ${cat}
                 </button>
             `).join('');
-            
             filterProducts(activeCategory);
         }
         
@@ -272,7 +226,6 @@
             const grid = document.getElementById('products-grid');
             if (!grid) return;
             const filtered = cat === "TOUT" ? dataProduitsGlobal : dataProduitsGlobal.filter(p => p.categorie === cat);
-            
             grid.innerHTML = filtered.map(p => `
                 <button onclick="addToCart(${p.id})" class="bg-[#222] p-4 rounded-lg text-left hover:border border-emerald-500 transition">
                     <p class="font-bold">${p.nom}</p>
@@ -283,19 +236,14 @@
         
         async function submitSale() {
             if (cart.length === 0) return;
-            
             const currentCompanyId = localStorage.getItem('active_company_id');
-            
-            // Formatage rigoureux du panier pour le serveur
             const formattedCart = cart.map(item => ({
-                id: item.id || item.Id,
-                // Utilise item.nom ou item.NomProduit selon la structure stockée globalement
-                nom: item.nom || item.NomProduit, 
-                prix: item.prix || item.PrixVente,
+                id: item.id,
+                nom: item.nom, 
+                prix: item.prix,
                 quantite: item.quantite
             }));
-        
-            // Utilisation de URLSearchParams pour correspondre à e.parameter côté serveur
+
             const params = new URLSearchParams();
             params.append('action', 'saveSale');
             params.append('data', JSON.stringify({
@@ -303,23 +251,22 @@
                 entrepriseId: currentCompanyId,
                 cart: formattedCart
             }));
-        
+
             try {
-                const response = await fetch(CONFIG.API_URL, { 
-                    method: "POST", 
-                    body: params 
-                });
-                
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: params });
                 const result = await response.json();
                 
+                // Log pour diagnostiquer l'erreur en console F12
+                console.log("DEBUG - Réponse serveur lors de la vente :", result);
+
                 if (result.success) {
-                    alert("Vente enregistrée avec succès !");
+                    showNotification("Vente enregistrée avec succès !");
                     clearCart();
                 } else {
-                    alert("Erreur : " + result.message);
+                    showNotification("Erreur : " + (result.message || "Erreur inconnue"), true);
                 }
             } catch (e) {
-                alert("Erreur technique : " + e.message);
+                showNotification("Erreur technique : " + e.message, true);
             }
         }
     </script>
