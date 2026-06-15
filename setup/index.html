@@ -19,7 +19,7 @@
             <p class="text-sm text-gray-400" id="welcome-msg">Vérification de la validité du lien...</p>
         </div>
 
-        <form id="setup-form" class="hidden space-y-4" onsubmit="savePassword(e)">
+        <form id="setup-form" class="hidden space-y-4">
             <div>
                 <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Nouveau mot de passe</label>
                 <input type="password" id="new-password" required placeholder="••••••••••••" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-3 text-sm focus:outline-none focus:border-gray-500">
@@ -41,6 +41,14 @@
         const token = urlParams.get('token');
         const welcomeMsg = document.getElementById('welcome-msg');
         const setupForm = document.getElementById('setup-form');
+
+        // Fonction de hachage SHA-512 côté client via l'API Web Crypto native
+        async function hashClientPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         // Validation immédiate du jeton au chargement
         if (!token) {
@@ -89,10 +97,13 @@
             }
 
             try {
+                // Hachage du mot de passe côté client avant l'envoi réseau
+                const hashedPass = await hashClientPassword(pass);
+
                 const formData = new FormData();
                 formData.append('action', 'completeSetupPassword');
                 formData.append('token', token);
-                formData.append('motDePasse', pass);
+                formData.append('motDePasse', hashedPass); // Envoi de la valeur hachée
 
                 const response = await fetch(CONFIG.API_URL, {
                     method: "POST",
