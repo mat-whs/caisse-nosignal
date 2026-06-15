@@ -34,5 +34,4 @@ const CONFIG = {
     document.write(`<link rel="stylesheet" href="${relPath}style.css">`);
     // Note : Le script Tailwind provoque l'avertissement console, mais il fonctionnera tant que le réseau suit.
     document.write(`<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>`);
-    document.write(`<script src="${relPath}config.js"></script>`);
 })();
