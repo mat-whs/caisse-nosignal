@@ -42,10 +42,16 @@
 
     // Vérifier la session dès le chargement de la page d'accueil
     const savedSession = localStorage.getItem('caisse_session');
+    const activeCompanyId = localStorage.getItem('active_company_id');
     
     if (savedSession) {
-        // Si une session existe, on redirige vers le dashboard
-        window.location.replace('/caisse-nosignal/dashboard/');
+        if (activeCompanyId) {
+            // Si l'utilisateur est connecté ET a déjà sélectionné son entreprise
+            window.location.replace('/caisse-nosignal/dashboard/');
+        } else {
+            // Si connecté mais n'a pas encore choisi son entreprise (ex: retour arrière forcé ou expiration locale)
+            window.location.replace('/caisse-nosignal/choix-entreprise/');
+        }
     }
     
     document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -64,7 +70,7 @@
             const formData = new FormData();
             formData.append('action', 'login');
             formData.append('identifiant', userInp);
-            formData.append('motDePasse', hashedPass); // Envoi de la valeur hachée
+            formData.append('motDePasse', hashedPass);
             
             const response = await fetch(CONFIG.API_URL, {
                 method: "POST",
@@ -74,14 +80,31 @@
             const result = await response.json();
             
             if (result.success) {
-                localStorage.setItem('caisse_session', JSON.stringify(result));
-                window.location.replace('/caisse-nosignal/dashboard/');
+                // Stockage des informations d'authentification conformes à la structure lue par nav.js
+                localStorage.setItem('caisse_session', JSON.stringify({
+                    userId: result.userId,
+                    token: result.token
+                }));
+
+                if (result.hasMultipleCompanies) {
+                    // Si l'utilisateur a accès à plusieurs entreprises, redirection vers l'intermédiaire
+                    window.location.replace('/caisse-nosignal/choix-entreprise/');
+                } else if (result.defaultEntreprise) {
+                    // Si une seule entreprise est disponible, on l'active directement et on charge le dashboard
+                    localStorage.setItem('active_company_id', result.defaultEntreprise);
+                    window.location.replace('/caisse-nosignal/dashboard/');
+                } else {
+                    // Cas d'un utilisateur sans aucune habilitation enregistrée dans le tableur
+                    localStorage.clear();
+                    errorTxt.innerText = "Erreur : Aucune entreprise ne vous est assignée.";
+                    errorTxt.classList.remove('hidden');
+                }
             } else {
                 errorTxt.innerText = result.message;
                 errorTxt.classList.remove('hidden');
             }
         } catch (error) {
-            errorTxt.innerText = "Erreur : Assurez-vous d'avoir redéployé le Code.gs.";
+            errorTxt.innerText = "Erreur : Connexion impossible. Vérifiez l'état de votre serveur API.";
             errorTxt.classList.remove('hidden');
             console.error(error);
         }
