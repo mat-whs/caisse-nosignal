@@ -39,6 +39,37 @@
                         </div>
                     </div>
 
+                    <!-- AJOUT DYNAMIQUE DEPUIS LE STOCK -->
+                    <div class="bg-[#161616] border border-[#222] rounded-lg p-4 space-y-3">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Sélection des composants (Depuis le Stock)</label>
+                        <div class="flex gap-2">
+                            <select id="stock-selector" class="flex-1 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none text-sm">
+                                <option value="">Chargement du stock...</option>
+                            </select>
+                            <input type="number" id="stock-qty" min="1" value="1" class="w-20 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-center text-white text-sm focus:outline-none">
+                            <button type="button" id="btn-add-ingredient" class="bg-[#222] hover:bg-[#333] text-white px-4 py-2 rounded text-xs font-bold transition">Ajouter</button>
+                        </div>
+
+                        <div class="overflow-x-auto pt-2">
+                            <table class="w-full text-left text-xs border-t border-[#222]">
+                                <thead class="text-gray-500 uppercase">
+                                    <tr>
+                                        <th class="py-2">Ingrédient</th>
+                                        <th class="py-2 text-center">Quantité</th>
+                                        <th class="py-2 text-right">Coût Unit.</th>
+                                        <th class="py-2 text-right">Sous-Total</th>
+                                        <th class="py-2 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredients-list-body">
+                                    <tr>
+                                        <td colspan="5" class="py-4 text-center text-gray-600 italic">Aucun ingrédient rattaché.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Prix de vente ($US)</label>
@@ -58,9 +89,20 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Composants / Ingrédients (Optionnel)</label>
-                        <input type="text" id="prod-components" placeholder="Ex: Pain:1, Viande:1, Fromage:2 (Séparés par des virgules)" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                    <!-- BLOC DE COMPTABILITÉ & MARGE EN DIRECT -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#141414] border border-[#222] rounded-lg p-4">
+                        <div>
+                            <span class="block text-[10px] text-gray-500 font-bold uppercase">Coût Total Ingrédients</span>
+                            <span id="summary-cost" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-gray-500 font-bold uppercase">Impact Prime</span>
+                            <span id="summary-prime" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-gray-500 font-bold uppercase">Marge Entreprise</span>
+                            <span id="summary-margin" class="text-base font-black text-gray-400">0.00 $US</span>
+                        </div>
                     </div>
 
                     <div class="pt-2">
@@ -101,17 +143,128 @@
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
         const activeCompanyId = localStorage.getItem('active_company_id');
 
-        // Sécurité de base locale
+        let localStock = []; 
+        let selectedIngredients = [];
+
         if (!sessionData || !activeCompanyId) {
             window.location.replace('/caisse-nosignal/');
         }
+
+        // Charger les options de stock
+        async function loadStockOptions() {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'getStockData');
+                formData.append('userId', sessionData.userId);
+                formData.append('activeCompanyId', activeCompanyId);
+
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+
+                if (result.success && result.stocks) {
+                    localStock = result.stocks;
+                    const selector = document.getElementById('stock-selector');
+                    selector.innerHTML = '<option value="">-- Choisir un ingrédient du stock --</option>' +
+                        localStock.map(s => `<option value="${s.id}">${s.nom} (${s.type})</option>`).join('');
+                }
+            } catch (e) {
+                document.getElementById('stock-selector').innerHTML = '<option value="">Erreur de chargement du stock</option>';
+            }
+        }
+
+        // Ajouter un composant
+        document.getElementById('btn-add-ingredient').addEventListener('click', () => {
+            const selector = document.getElementById('stock-selector');
+            const qtyInput = document.getElementById('stock-qty');
+            const stockId = parseInt(selector.value);
+            const qty = parseInt(qtyInput.value);
+
+            if (!stockId || qty < 1) return;
+
+            const targetItem = localStock.find(s => s.id === stockId);
+            if (!targetItem) return;
+
+            const existing = selectedIngredients.find(i => i.id === stockId);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                selectedIngredients.push({
+                    id: targetItem.id,
+                    nom: targetItem.nom,
+                    qty: qty,
+                    prixUnitaire: targetItem.prixUnitaire || 0 // S'appuie sur le coût unitaire s'il existe en BDD, sinon 0
+                });
+            }
+
+            selector.value = "";
+            qtyInput.value = "1";
+            renderIngredients();
+        });
+
+        function removeIngredient(id) {
+            selectedIngredients = selectedIngredients.filter(i => i.id !== id);
+            renderIngredients();
+        }
+
+        function renderIngredients() {
+            const tbody = document.getElementById('ingredients-list-body');
+            if (selectedIngredients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-600 italic">Aucun ingrédient rattaché.</td></tr>`;
+                calculateFinancials();
+                return;
+            }
+
+            tbody.innerHTML = selectedIngredients.map(i => `
+                <tr class="border-b border-[#222]">
+                    <td class="py-2 text-white font-medium">${i.nom}</td>
+                    <td class="py-2 text-center text-gray-400">${i.qty}</td>
+                    <td class="py-2 text-right text-gray-500">${(i.prixUnitaire || 0).toFixed(2)} $US</td>
+                    <td class="py-2 text-right text-emerald-500 font-medium">${((i.prixUnitaire || 0) * i.qty).toFixed(2)} $US</td>
+                    <td class="py-2 text-center">
+                        <button type="button" onclick="removeIngredient(${i.id})" class="text-red-400 hover:text-red-500">❌</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            calculateFinancials();
+        }
+
+        function calculateFinancials() {
+            const price = parseFloat(document.getElementById('prod-price').value) || 0;
+            const primeType = document.getElementById('prod-prime-type').value;
+            const primeVal = parseFloat(document.getElementById('prod-prime-value').value) || 0;
+
+            const totalIngredientsCost = selectedIngredients.reduce((acc, curr) => acc + ((curr.prixUnitaire || 0) * curr.qty), 0);
+            
+            let computedPrime = 0;
+            if (primeType === "Fixe") computedPrime = primeVal;
+            else if (primeType === "Pourcentage") computedPrime = price * (primeVal / 100);
+
+            const margin = price - totalIngredientsCost - computedPrime;
+
+            document.getElementById('summary-cost').innerText = `${totalIngredientsCost.toFixed(2)} $US`;
+            document.getElementById('summary-prime').innerText = `${computedPrime.toFixed(2)} $US`;
+
+            const marginElement = document.getElementById('summary-margin');
+            marginElement.innerText = `${margin.toFixed(2)} $US`;
+
+            if (margin >= 0) {
+                marginElement.className = "text-base font-black text-emerald-400";
+            } else {
+                marginElement.className = "text-base font-black text-red-500";
+            }
+        }
+
+        document.getElementById('prod-price').addEventListener('input', calculateFinancials);
+        document.getElementById('prod-prime-type').addEventListener('change', calculateFinancials);
+        document.getElementById('prod-prime-value').addEventListener('input', calculateFinancials);
 
         // Charger la liste complète des articles existants au démarrage
         async function loadCompanyProducts() {
             const tbody = document.getElementById('products-table-body');
             try {
                 const formData = new FormData();
-                formData.append('action', 'getCaisseData'); // On réutilise votre action API existante
+                formData.append('action', 'getCaisseData');
                 formData.append('userId', sessionData.userId);
                 formData.append('activeCompanyId', activeCompanyId);
 
@@ -148,8 +301,9 @@
         document.getElementById('form-add-product').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const componentsString = selectedIngredients.map(i => `${i.nom}:${i.qty}`).join(', ');
             const formData = new FormData();
-            formData.append('action', 'addProduct'); // L'action côté Apps Script
+            formData.append('action', 'addProduct');
             
             const productData = {
                 entrepriseId: activeCompanyId,
@@ -158,7 +312,7 @@
                 prix: parseFloat(document.getElementById('prod-price').value),
                 typePrime: document.getElementById('prod-prime-type').value,
                 valeurPrime: parseFloat(document.getElementById('prod-prime-value').value) || 0,
-                composants: document.getElementById('prod-components').value
+                composants: componentsString
             };
 
             formData.append('data', JSON.stringify(productData));
@@ -170,7 +324,9 @@
                 if (result.success) {
                     alert("Produit ajouté avec succès !");
                     document.getElementById('form-add-product').reset();
-                    loadCompanyProducts(); // Recharge le tableau instantanément
+                    selectedIngredients = [];
+                    renderIngredients();
+                    loadCompanyProducts();
                 } else {
                     alert("Erreur lors de l'enregistrement : " + result.message);
                 }
@@ -179,7 +335,6 @@
             }
         });
 
-        // Fonction de suppression (Optionnel, appelle une action "deleteProduct")
         async function deleteProduct(productId) {
             if (!confirm("Voulez-vous vraiment retirer cet article définitivement ?")) return;
             
@@ -187,6 +342,7 @@
             formData.append('action', 'deleteProduct');
             formData.append('productId', productId);
             formData.append('entrepriseId', activeCompanyId);
+            formData.append('userId', sessionData.userId);
 
             try {
                 const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
@@ -201,8 +357,12 @@
             }
         }
 
-        // Initialisation au chargement de la page
-        loadCompanyProducts();
+        // Initialisation globale
+        async function init() {
+            await loadStockOptions();
+            await loadCompanyProducts();
+        }
+        init();
     </script>
 </body>
 </html>
