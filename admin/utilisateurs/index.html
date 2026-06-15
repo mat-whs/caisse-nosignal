@@ -1,1 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration des Utilisateurs - NoSignal</title>
+    <script src="/caisse-nosignal/gateway.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
 
+    <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div id="loading-box" class="max-w-md space-y-6">
+            <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
+            <p id="loading-text" class="text-lg text-gray-300 font-medium tracking-wide">
+                Chargement des données d'administration...
+            </p>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="w-full min-h-screen flex">
+        
+        <div id="sidebar-container" class="h-full shrink-0"></div>
+
+        <main class="flex-1 bg-[#161616] flex flex-col min-w-0">
+            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
+                <div class="flex items-center space-x-4">
+                    <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Espace Privé</span>
+                </div>
+                <div class="text-xs text-gray-400 bg-[#222] px-3 py-1 rounded">
+                    Administration Générale
+                </div>
+            </header>
+
+            <div class="flex-1 p-8 overflow-y-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-wide text-white">Gestion des Utilisateurs</h2>
+                        <p class="text-sm text-gray-500 mt-1">Créez, modifiez et gérez les accès et autorisations des collaborateurs.</p>
+                    </div>
+                </div>
+
+                <div id="password-link-box" class="hidden bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Lien d'initialisation généré</p>
+                        <p id="generated-link-text" class="text-sm text-gray-300 truncate mt-1 bg-[#111] px-3 py-2 rounded border border-[#222] select-all font-mono"></p>
+                    </div>
+                    <button id="btn-copy-link" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-4 py-2.5 rounded transition shrink-0 cursor-pointer flex items-center space-x-2">
+                        <span>Copier le lien</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    
+                    <div class="lg:col-span-2 bg-[#111] border border-[#222] rounded-xl p-6 overflow-hidden flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-white">Liste des comptes</h3>
+                            <button onclick="resetForm()" class="text-xs bg-[#222] hover:bg-[#2a2a2a] border border-[#333] px-3 py-1.5 rounded text-gray-300 transition">
+                                + Nouveau collaborateur
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="border-b border-[#222] text-gray-500 text-xs uppercase font-bold tracking-wider">
+                                        <th class="py-3 px-4">ID</th>
+                                        <th class="py-3 px-4">Identifiant</th>
+                                        <th class="py-3 px-4">Rôle</th>
+                                        <th class="py-3 px-4">Admin</th>
+                                        <th class="py-3 px-4">Statut</th>
+                                        <th class="py-3 px-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-[#222]/50 text-gray-300">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111] border border-[#222] rounded-xl p-6 flex flex-col">
+                        <h3 id="form-title" class="text-lg font-bold text-white mb-4">Créer un utilisateur</h3>
+                        
+                        <form id="user-form" class="space-y-4">
+                            <input type="hidden" id="targetUserId" value="">
+
+                            <div>
+                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Identifiant</label>
+                                <input type="text" id="targetIdentifiant" required class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none focus:border-gray-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Rôle principal</label>
+                                <select id="targetRole" required class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none cursor-pointer">
+                                    </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Entreprises Autorisées (Séparées par des virgules)</label>
+                                <input type="text" id="targetEntreprisesAutorisees" placeholder="Ex: 1, 2" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Entreprises Patron (Séparées par des virgules)</label>
+                                <input type="text" id="targetEntreprisesPatron" placeholder="Ex: 1" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Entreprises Partenaire (Séparées par des virgules)</label>
+                                <input type="text" id="targetEntreprisesPartenaire" placeholder="Ex: 2" class="w-full bg-[#1c1c1c] border border-[#333] text-white rounded p-2.5 text-sm focus:outline-none">
+                            </div>
+
+                            <div class="flex items-center space-x-3 pt-2">
+                                <input type="checkbox" id="targetIsAdmin" class="w-4 h-4 bg-[#1c1c1c] border border-[#333] rounded text-emerald-500 focus:ring-0 cursor-pointer">
+                                <label for="targetIsAdmin" class="text-sm text-gray-300 font-medium cursor-pointer select-none">Définir comme Administrateur général</label>
+                            </div>
+
+                            <div class="pt-4 flex items-center space-x-3">
+                                <button type="submit" class="flex-1 bg-white hover:bg-gray-200 text-black font-bold text-sm py-2.5 rounded transition cursor-pointer">
+                                    Enregistrer
+                                </button>
+                                <button type="button" onclick="resetForm()" class="bg-[#222] hover:bg-[#2a2a2a] border border-[#333] text-gray-400 font-medium text-sm px-4 py-2.5 rounded transition">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        let cachedUsers = [];
+
+        // Sécurité timeout API
+        const timeoutSecurity = setTimeout(() => {
+            if (!loadingOverlay.classList.contains('hidden') && loadingSpinner) {
+                showBlockError("Le serveur Apps Script met trop de temps à répondre. Vérifiez votre connexion.");
+            }
+        }, 10000);
+
+        function showBlockError(message) {
+            clearTimeout(timeoutSecurity);
+            if (loadingSpinner) loadingSpinner.remove();
+            loadingOverlay.classList.remove('hidden');
+            loadingText.innerHTML = `<span class="text-red-500 font-bold block text-xl mb-2">Problème d'accès</span>
+                                     <span class="text-gray-300 text-sm block max-w-md mx-auto leading-relaxed">${message}</span>
+                                     <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 border border-[#333] text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour</button>`;
+        }
+
+        if (!sessionData) {
+            window.location.replace('../../');
+        } else {
+            async function fetchAdminUsersData() {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'getAdminUsersData');
+                    formData.append('userId', sessionData.userId);
+
+                    const response = await fetch(CONFIG.API_URL, {
+                        method: "POST",
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+
+                    if (result.success) {
+                        clearTimeout(timeoutSecurity);
+                        cachedUsers = result.users;
+
+                        // Remplir le sélecteur de rôles du formulaire
+                        const roleSelector = document.getElementById('targetRole');
+                        roleSelector.innerHTML = '<option value="">-- Choisir un rôle --</option>';
+                        result.roles.forEach(role => {
+                            const opt = document.createElement('option');
+                            opt.value = role.nom;
+                            opt.innerText = role.nom;
+                            roleSelector.appendChild(opt);
+                        });
+
+                        // Rendre la liste des utilisateurs
+                        renderUsersTable(result.users);
+                        loadingOverlay.classList.add('hidden');
+                    } else {
+                        showBlockError(result.message || "Droits d'administration requis.");
+                    }
+                } catch (error) {
+                    showBlockError("Erreur réseau lors de la récupération des profils.");
+                }
+            }
+
+            fetchAdminUsersData();
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = "";
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-500 italic">Aucun utilisateur enregistré</td></tr>`;
+                return;
+            }
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-[#222]/30 hover:bg-[#151515] transition";
+                
+                const badgeStatut = user.statutMotDePasse === "Validé" 
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-900">Validé</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-900">En attente</span>`;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-xs text-gray-500">${user.id}</td>
+                    <td class="py-3 px-4 font-bold text-white">${user.identifiant}</td>
+                    <td class="py-3 px-4 text-gray-400 text-xs">${user.role || 'Aucun'}</td>
+                    <td class="py-3 px-4 text-xs">${user.admin ? '<span class="text-blue-400 font-bold">Oui</span>' : '<span class="text-gray-600">Non</span>'}</td>
+                    <td class="py-3 px-4 text-xs">${badgeStatut}</td>
+                    <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
+                        <button onclick="loadUserIntoForm(${user.id})" class="text-xs bg-[#222] hover:bg-gray-200 hover:text-black border border-[#333] px-2.5 py-1 rounded transition text-gray-300">Modifier</button>
+                        <button onclick="askPasswordLink(${user.id})" class="text-xs bg-neutral-900 hover:bg-amber-950 border border-neutral-800 hover:border-amber-900 px-2.5 py-1 rounded transition text-amber-400">Lien MDP</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Charger les données actuelles de l'utilisateur ciblé dans le formulaire
+        function loadUserIntoForm(userId) {
+            const user = cachedUsers.find(u => u.id.toString() === userId.toString());
+            if (!user) return;
+
+            document.getElementById('form-title').innerText = `Modifier l'utilisateur #${user.id}`;
+            document.getElementById('targetUserId').value = user.id;
+            document.getElementById('targetIdentifiant').value = user.identifiant;
+            document.getElementById('targetRole').value = user.role;
+            document.getElementById('targetEntreprisesAutorisees').value = user.entreprisesAutorisees;
+            document.getElementById('targetEntreprisesPatron').value = user.entreprisesPatron;
+            document.getElementById('targetEntreprisesPartenaire').value = user.entreprisesPartenaire;
+            document.getElementById('targetIsAdmin').checked = user.admin;
+            
+            document.getElementById('targetIdentifiant').focus();
+        }
+
+        function resetForm() {
+            document.getElementById('form-title').innerText = "Créer un utilisateur";
+            document.getElementById('targetUserId').value = "";
+            document.getElementById('user-form').reset();
+        }
+
+        // Soumission et enregistrement (Création / Modification)
+        document.getElementById('user-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'saveUser');
+                formData.append('userId', sessionData.userId);
+                formData.append('targetUserId', document.getElementById('targetUserId').value);
+                formData.append('targetIdentifiant', document.getElementById('targetIdentifiant').value);
+                formData.append('targetRole', document.getElementById('targetRole').value);
+                formData.append('targetEntreprisesAutorisees', document.getElementById('targetEntreprisesAutorisees').value);
+                formData.append('targetEntreprisesPatron', document.getElementById('targetEntreprisesPatron').value);
+                formData.append('targetEntreprisesPartenaire', document.getElementById('targetEntreprisesPartenaire').value);
+                formData.append('targetIsAdmin', document.getElementById('targetIsAdmin').checked ? "true" : "false");
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    resetForm();
+                    await fetchAdminUsersData();
+                } else {
+                    alert(result.message || "Une erreur est survenue.");
+                    loadingOverlay.classList.add('hidden');
+                }
+            } catch (error) {
+                alert("Erreur réseau lors de la sauvegarde.");
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        // Génération du lien de configuration de mot de passe
+        async function askPasswordLink(targetId) {
+            try {
+                // Déduction dynamique de la base URL
+                const baseUrl = window.location.origin + window.location.pathname.split('/admin/')[0] + '/';
+                
+                const formData = new FormData();
+                formData.append('action', 'generatePasswordLink');
+                formData.append('userId', sessionData.userId);
+                formData.append('targetUserId', targetId);
+                formData.append('baseUrl', baseUrl);
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const linkBox = document.getElementById('password-link-box');
+                    const linkText = document.getElementById('generated-link-text');
+                    const copyBtn = document.getElementById('btn-copy-link');
+
+                    linkText.innerText = result.setupLink;
+                    linkBox.classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Gestionnaire de copie
+                    copyBtn.onclick = function() {
+                        navigator.clipboard.writeText(result.setupLink).then(() => {
+                            const originalText = copyBtn.innerHTML;
+                            copyBtn.innerHTML = "<span>Copié !</span>";
+                            copyBtn.classList.replace('bg-emerald-600', 'bg-blue-600');
+                            setTimeout(() => {
+                                copyBtn.innerHTML = originalText;
+                                copyBtn.classList.replace('bg-blue-600', 'bg-emerald-600');
+                            }, 2000);
+                        });
+                    };
+                } else {
+                    alert(result.message || "Erreur de génération.");
+                }
+            } catch (error) {
+                alert("Erreur de communication avec l'API.");
+            }
+        }
+
+        function logoutForce() {
+            localStorage.removeItem('caisse_session');
+            localStorage.removeItem('active_company_id');
+            window.location.replace('../../');
+        }
+    </script>
+
+    <script src="/caisse-nosignal/nav.js"></script>
+    
+</body>
+</html>
