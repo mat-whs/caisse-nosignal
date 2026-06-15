@@ -64,7 +64,7 @@
         function showBlockError(message) {
             clearTimeout(timeoutSecurity);
             if (loadingSpinner) loadingSpinner.remove();
-            loadingOverlay.classList.remove('hidden');
+            if (loadingOverlay) loadingOverlay.classList.remove('hidden');
             loadingText.innerHTML = `<span class="text-red-500 font-bold block text-xl mb-2">Problème de connexion</span>
                                      <span class="text-gray-300 text-sm block max-w-md mx-auto leading-relaxed">${message}</span>
                                      <button onclick="logoutForce()" class="mt-6 bg-[#222] hover:bg-red-900 border border-[#333] text-white text-xs px-4 py-2 rounded transition cursor-pointer">Retour</button>`;
@@ -78,7 +78,7 @@
                     const formData = new FormData();
                     formData.append('action', 'getDashboardData');
                     formData.append('userId', sessionData.userId);
-                    formData.append('activeCompanyId', activeCompanyId); // Correction : envoi requis pour passer le filtre
+                    formData.append('activeCompanyId', activeCompanyId);
 
                     const response = await fetch(CONFIG.API_URL, {
                         method: "POST",
@@ -89,26 +89,8 @@
 
                     if (result.success) {
                         clearTimeout(timeoutSecurity);
-                        
-                        compSelector.innerHTML = "";
-                        
-                        result.entreprises.forEach(entreprise => {
-                            const opt = document.createElement('option');
-                            opt.value = entreprise.id;
-                            opt.innerText = entreprise.nom;
-                            if (String(entreprise.id) === String(activeCompanyId)) {
-                                opt.selected = true;
-                            }
-                            compSelector.appendChild(opt);
-                        });
 
-                        // Événement de bascule dynamique d'établissement
-                        compSelector.addEventListener('change', (e) => {
-                            localStorage.setItem('active_company_id', e.target.value);
-                            window.location.reload();
-                        });
-
-                        // Rendu optionnel des statistiques retournées par l'API
+                        // Rendu des statistiques retournées par l'API
                         if (result.stats) {
                             document.getElementById('stat-ca').innerText = (result.stats.ca || 0).toFixed(2) + " $";
                             document.getElementById('stat-transactions').innerText = result.stats.transactions || 0;
