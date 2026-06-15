@@ -16,124 +16,219 @@
         <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
             <div>
                 <h2 class="text-xl font-bold tracking-wide">Gestion de l'Entreprise</h2>
-                <p class="text-xs text-gray-500">Ajoutez et gérez les produits disponibles dans votre module de caisse.</p>
+                <p class="text-xs text-gray-500">Gérez vos produits de caisse et l'ensemble de votre catalogue de stock.</p>
             </div>
         </header>
 
-        <div class="flex-1 p-8 overflow-y-auto space-y-8">
+        <div class="flex-1 p-8 overflow-y-auto space-y-12">
             
-            <div class="bg-[#111] border border-[#222] rounded-xl p-6 max-w-2xl">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <span>➕</span> Ajouter un nouveau produit ou menu
-                </h3>
-                
-                <form id="form-add-product" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nom du produit</label>
-                            <input type="text" id="prod-name" required placeholder="Ex: Menu Burger XL" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Catégorie</label>
-                            <input type="text" id="prod-category" required placeholder="Ex: Menus, Boissons, Burgers" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
-                        </div>
-                    </div>
-
-                    <!-- AJOUT DYNAMIQUE DEPUIS LE STOCK -->
-                    <div class="bg-[#161616] border border-[#222] rounded-lg p-4 space-y-3">
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Sélection des composants (Depuis le Stock)</label>
-                        <div class="flex gap-2">
-                            <select id="stock-selector" class="flex-1 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none text-sm">
-                                <option value="">Chargement du stock...</option>
-                            </select>
-                            <input type="number" id="stock-qty" min="1" value="1" class="w-20 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-center text-white text-sm focus:outline-none">
-                            <button type="button" id="btn-add-ingredient" class="bg-[#222] hover:bg-[#333] text-white px-4 py-2 rounded text-xs font-bold transition">Ajouter</button>
+            <div class="space-y-6">
+                <div class="bg-[#111] border border-[#222] rounded-xl p-6 max-w-4xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span>➕</span> Ajouter / Modifier un produit ou menu (Caisse)
+                    </h3>
+                    
+                    <form id="form-add-product" class="space-y-4">
+                        <input type="hidden" id="edit-prod-id" value="">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nom du produit</label>
+                                <input type="text" id="prod-name" required placeholder="Ex: Menu Burger XL" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Catégorie</label>
+                                <input type="text" id="prod-category" required placeholder="Ex: Menus, Boissons, Burgers" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                            </div>
                         </div>
 
-                        <div class="overflow-x-auto pt-2">
-                            <table class="w-full text-left text-xs border-t border-[#222]">
-                                <thead class="text-gray-500 uppercase">
-                                    <tr>
-                                        <th class="py-2">Ingrédient</th>
-                                        <th class="py-2 text-center">Quantité</th>
-                                        <th class="py-2 text-right">Coût Unit.</th>
-                                        <th class="py-2 text-right">Sous-Total</th>
-                                        <th class="py-2 text-center">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ingredients-list-body">
-                                    <tr>
-                                        <td colspan="5" class="py-4 text-center text-gray-600 italic">Aucun ingrédient rattaché.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                        <div class="bg-[#161616] border border-[#222] rounded-lg p-4 space-y-3">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Sélection des composants (Depuis le Stock)</label>
+                            <div class="flex gap-2">
+                                <select id="stock-selector" class="flex-1 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none text-sm">
+                                    <option value="">Chargement du stock...</option>
+                                </select>
+                                <input type="number" id="stock-qty" min="1" value="1" class="w-20 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-center text-white text-sm focus:outline-none">
+                                <button type="button" id="btn-add-ingredient" class="bg-[#222] hover:bg-[#333] text-white px-4 py-2 rounded text-xs font-bold transition">Ajouter</button>
+                            </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Prix de vente ($US)</label>
-                            <input type="number" id="prod-price" required step="0.01" min="0" placeholder="0.00" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                            <div class="overflow-x-auto pt-2">
+                                <table class="w-full text-left text-xs border-t border-[#222]">
+                                    <thead class="text-gray-500 uppercase">
+                                        <tr>
+                                            <th class="py-2">Ingrédient</th>
+                                            <th class="py-2 text-center">Quantité</th>
+                                            <th class="py-2 text-right">Coût Unit.</th>
+                                            <th class="py-2 text-right">Sous-Total</th>
+                                            <th class="py-2 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ingredients-list-body">
+                                        <tr>
+                                            <td colspan="5" class="py-4 text-center text-gray-600 italic">Aucun ingrédient rattaché.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Type de Prime Employee</label>
-                            <select id="prod-prime-type" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm cursor-pointer">
-                                <option value="Fixe">Fixe ($ par vente)</option>
-                                <option value="Pourcentage">Pourcentage (% du prix)</option>
-                                <option value="Aucune">Aucune prime</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valeur de la Prime</label>
-                            <input type="number" id="prod-prime-value" step="0.01" min="0" placeholder="0" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
-                        </div>
-                    </div>
 
-                    <!-- BLOC DE COMPTABILITÉ & MARGE EN DIRECT -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#141414] border border-[#222] rounded-lg p-4">
-                        <div>
-                            <span class="block text-[10px] text-gray-500 font-bold uppercase">Coût Total Ingrédients</span>
-                            <span id="summary-cost" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Prix de vente ($US)</label>
+                                <input type="number" id="prod-price" required step="0.01" min="0" placeholder="0.00" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Type de Prime Employee</label>
+                                <select id="prod-prime-type" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm cursor-pointer">
+                                    <option value="Fixe">Fixe ($ par vente)</option>
+                                    <option value="Pourcentage">Pourcentage (% du prix)</option>
+                                    <option value="Aucune">Aucune prime</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valeur de la Prime</label>
+                                <input type="number" id="prod-prime-value" step="0.01" min="0" placeholder="0" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                            </div>
                         </div>
-                        <div>
-                            <span class="block text-[10px] text-gray-500 font-bold uppercase">Impact Prime</span>
-                            <span id="summary-prime" class="text-sm font-bold text-gray-300">0.00 $US</span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] text-gray-500 font-bold uppercase">Marge Entreprise</span>
-                            <span id="summary-margin" class="text-base font-black text-gray-400">0.00 $US</span>
-                        </div>
-                    </div>
 
-                    <div class="pt-2">
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition cursor-pointer">
-                            Enregistrer le produit
-                        </button>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#141414] border border-[#222] rounded-lg p-4">
+                            <div>
+                                <span class="block text-[10px] text-gray-500 font-bold uppercase">Coût Total Ingrédients</span>
+                                <span id="summary-cost" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-gray-500 font-bold uppercase">Impact Prime</span>
+                                <span id="summary-prime" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-gray-500 font-bold uppercase">Marge Entreprise</span>
+                                <span id="summary-margin" class="text-base font-black text-gray-400">0.00 $US</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex gap-2">
+                            <button type="submit" id="btn-submit-product" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+                                Enregistrer le produit
+                            </button>
+                            <button type="button" id="btn-cancel-product" class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+                                Annuler la modification
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
+                    <div class="p-4 bg-[#141414] border-b border-[#222]">
+                        <h3 class="font-bold text-white text-sm">Articles actuellement disponibles en Caisse</h3>
                     </div>
-                </form>
+                    <table class="w-full text-left text-sm text-gray-300">
+                        <thead class="bg-[#161616] text-gray-400 uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Catégorie</th>
+                                <th class="p-4">Nom de l'article</th>
+                                <th class="p-4">Composants</th>
+                                <th class="p-4">Prix de vente</th>
+                                <th class="p-4">Prime Collab.</th>
+                                <th class="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body">
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-gray-500 italic">Chargement des produits...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
-                <div class="p-4 bg-[#141414] border-b border-[#222]">
-                    <h3 class="font-bold text-white text-sm">Articles actuellement configurés dans l'établissement</h3>
+            <div class="space-y-6 border-t border-[#222] pt-12">
+                <div class="bg-[#111] border border-[#222] rounded-xl p-6 max-w-4xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span>📦</span> Configuration & Enregistrement des éléments de Stock
+                    </h3>
+                    
+                    <form id="form-add-stock-item" class="space-y-4">
+                        <input type="hidden" id="edit-stock-id" value="">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nom de l'élément</label>
+                                <input type="text" id="stock-name" required placeholder="Ex: Pain, Salade, Viande" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Type d'élément</label>
+                                <select id="stock-type" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm cursor-pointer">
+                                    <option value="ingredient">Ingrédient (Consommable menu)</option>
+                                    <option value="objet">Objet / Item général</option>
+                                    <option value="matiere_premiere">Matière Première</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Coût Unitaire ($US)</label>
+                                <input type="number" id="stock-item-cost" required step="0.01" min="0" placeholder="0.00" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#141414] border border-[#222] rounded-lg p-4">
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm text-gray-300 font-medium cursor-pointer">
+                                    <input type="checkbox" id="stock-is-productible" class="rounded bg-[#1c1c1c] border-[#333] text-blue-500 focus:ring-0">
+                                    <span>Peut être Fabriqué / Produit</span>
+                                </label>
+                                <div id="prod-prime-block" class="hidden pl-6">
+                                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Prime versée pour Production ($)</label>
+                                    <input type="number" id="stock-prime-production" step="0.01" min="0" placeholder="0.00" class="w-full max-w-xs bg-[#1c1c1c] border border-[#333] rounded px-3 py-1.5 text-white focus:outline-none text-xs">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm text-gray-300 font-medium cursor-pointer">
+                                    <input type="checkbox" id="stock-is-recoltable" class="rounded bg-[#1c1c1c] border-[#333] text-blue-500 focus:ring-0">
+                                    <span>Peut être Récolté</span>
+                                </label>
+                                <div id="recolte-prime-block" class="hidden pl-6">
+                                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">Prime versée pour Récolte ($)</label>
+                                    <input type="number" id="stock-prime-recolte" step="0.01" min="0" placeholder="0.00" class="w-full max-w-xs bg-[#1c1c1c] border border-[#333] rounded px-3 py-1.5 text-white focus:outline-none text-xs">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Composants requis pour la fabrication (Optionnel)</label>
+                            <input type="text" id="stock-item-components" placeholder="Ex: Patate:2, Huile:1 (Séparés par des virgules pour le suivi d'usine)" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+
+                        <div class="pt-2 flex gap-2">
+                            <button type="submit" id="btn-submit-stock" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+                                Enregistrer dans le stock
+                            </button>
+                            <button type="button" id="btn-cancel-stock" class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <table class="w-full text-left text-sm text-gray-300">
-                    <thead class="bg-[#161616] text-gray-400 uppercase text-xs">
-                        <tr>
-                            <th class="p-4">Catégorie</th>
-                            <th class="p-4">Nom de l'article</th>
-                            <th class="p-4">Composants</th>
-                            <th class="p-4">Prix de vente</th>
-                            <th class="p-4">Prime Collab.</th>
-                            <th class="p-4 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="products-table-body">
-                        <tr>
-                            <td colspan="6" class="p-8 text-center text-gray-500 italic">Chargement de la liste des produits...</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+                <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
+                    <div class="p-4 bg-[#141414] border-b border-[#222]">
+                        <h3 class="font-bold text-white text-sm">Catalogue et structures des Éléments de Stock</h3>
+                    </div>
+                    <table class="w-full text-left text-sm text-gray-300">
+                        <thead class="bg-[#161616] text-gray-400 uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Type</th>
+                                <th class="p-4">Nom de l'élément</th>
+                                <th class="p-4">Coût de revient</th>
+                                <th class="p-4">Productible (Prime)</th>
+                                <th class="p-4">Récoltable (Prime)</th>
+                                <th class="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-items-table-body">
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-gray-500 italic">Chargement du catalogue stock...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
@@ -144,13 +239,25 @@
         const activeCompanyId = localStorage.getItem('active_company_id');
 
         let localStock = []; 
+        let localProducts = [];
         let selectedIngredients = [];
 
         if (!sessionData || !activeCompanyId) {
             window.location.replace('/caisse-nosignal/');
         }
 
-        // Charger les options de stock
+        // --- AFFICHAGE DYNAMIQUE FORMULAIRE STOCK ---
+        document.getElementById('stock-is-productible').addEventListener('change', (e) => {
+            document.getElementById('prod-prime-block').classList.toggle('hidden', !e.target.checked);
+        });
+        document.getElementById('stock-is-recoltable').addEventListener('change', (e) => {
+            document.getElementById('recolte-prime-block').classList.toggle('hidden', !e.target.checked);
+        });
+
+        // =========================================================================
+        // CHARGEMENTS ET AFFICHAGES BDD
+        // =========================================================================
+
         async function loadStockOptions() {
             try {
                 const formData = new FormData();
@@ -163,16 +270,79 @@
 
                 if (result.success && result.stocks) {
                     localStock = result.stocks;
+                    
+                    // Remplir le selecteur de composition de menu
                     const selector = document.getElementById('stock-selector');
                     selector.innerHTML = '<option value="">-- Choisir un ingrédient du stock --</option>' +
                         localStock.map(s => `<option value="${s.id}">${s.nom} (${s.type})</option>`).join('');
+
+                    // Remplir la table de gestion complète du stock
+                    const tbody = document.getElementById('stock-items-table-body');
+                    if(localStock.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aucun élément configuré dans le stock.</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = localStock.map(s => `
+                        <tr class="border-b border-[#222] hover:bg-[#141414] transition">
+                            <td class="p-4 text-xs font-semibold uppercase text-gray-500">${s.type}</td>
+                            <td class="p-4 text-white font-medium">${s.nom}</td>
+                            <td class="p-4 text-gray-300">${(s.prixUnitaire || 0).toFixed(2)} $US</td>
+                            <td class="p-4 text-xs">${s.productible === 'oui' ? `✅ (${s.primeProduction || 0} $)` : '❌'}</td>
+                            <td class="p-4 text-xs">${s.recoltable === 'oui' ? `✅ (${s.primeRecolte || 0} $)` : '❌'}</td>
+                            <td class="p-4 text-center space-x-2">
+                                <button onclick="setupEditStock(${s.id})" class="text-xs bg-blue-950/40 border border-blue-900 text-blue-400 px-2 py-1 rounded hover:bg-blue-900 hover:text-white transition cursor-pointer">Modifier</button>
+                                <button onclick="deleteStockItem(${s.id})" class="text-xs bg-red-950/40 border border-red-900 text-red-400 px-2 py-1 rounded hover:bg-red-900 hover:text-white transition cursor-pointer">Supprimer</button>
+                            </td>
+                        </tr>
+                    `).join('');
                 }
             } catch (e) {
                 document.getElementById('stock-selector').innerHTML = '<option value="">Erreur de chargement du stock</option>';
             }
         }
 
-        // Ajouter un composant
+        async function loadCompanyProducts() {
+            const tbody = document.getElementById('products-table-body');
+            try {
+                const formData = new FormData();
+                formData.append('action', 'getCaisseData');
+                formData.append('userId', sessionData.userId);
+                formData.append('activeCompanyId', activeCompanyId);
+
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+
+                if (result.success && result.produits) {
+                    localProducts = result.produits;
+                    if (localProducts.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aucun produit configuré.</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = localProducts.map(p => `
+                        <tr class="border-b border-[#222] hover:bg-[#141414] transition">
+                            <td class="p-4 font-semibold text-gray-400 text-xs">${p.categorie || 'Général'}</td>
+                            <td class="p-4 text-white font-medium">${p.nom}</td>
+                            <td class="p-4 text-xs text-gray-500">${p.composants || 'Aucun'}</td>
+                            <td class="p-4 text-emerald-400 font-bold">${p.prix.toFixed(2)} $US</td>
+                            <td class="p-4 text-xs text-blue-400">${p.valeurPrime ? p.valeurPrime + ' (' + p.typePrime + ')' : 'Aucune'}</td>
+                            <td class="p-4 text-center space-x-2">
+                                <button onclick="setupEditProduct(${p.id})" class="text-xs bg-emerald-950/40 border border-emerald-900 text-emerald-400 px-2 py-1 rounded hover:bg-emerald-900 hover:text-white transition cursor-pointer">Modifier</button>
+                                <button onclick="deleteProduct(${p.id})" class="text-xs bg-red-950/40 border border-red-900 text-red-400 px-2 py-1 rounded hover:bg-red-900 hover:text-white transition cursor-pointer">Supprimer</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">Erreur de chargement.</td></tr>`;
+            }
+        }
+
+        // =========================================================================
+        // LOGIQUE DE COMPOSITION DES ARTICLES (PRODUITS)
+        // =========================================================================
+
         document.getElementById('btn-add-ingredient').addEventListener('click', () => {
             const selector = document.getElementById('stock-selector');
             const qtyInput = document.getElementById('stock-qty');
@@ -192,10 +362,9 @@
                     id: targetItem.id,
                     nom: targetItem.nom,
                     qty: qty,
-                    prixUnitaire: targetItem.prixUnitaire || 0 // S'appuie sur le coût unitaire s'il existe en BDD, sinon 0
+                    prixUnitaire: targetItem.prixUnitaire || 0
                 });
             }
-
             selector.value = "";
             qtyInput.value = "1";
             renderIngredients();
@@ -225,7 +394,6 @@
                     </td>
                 </tr>
             `).join('');
-
             calculateFinancials();
         }
 
@@ -248,62 +416,27 @@
             const marginElement = document.getElementById('summary-margin');
             marginElement.innerText = `${margin.toFixed(2)} $US`;
 
-            if (margin >= 0) {
-                marginElement.className = "text-base font-black text-emerald-400";
-            } else {
-                marginElement.className = "text-base font-black text-red-500";
-            }
+            if (margin >= 0) marginElement.className = "text-base font-black text-emerald-400";
+            else marginElement.className = "text-base font-black text-red-500";
         }
 
         document.getElementById('prod-price').addEventListener('input', calculateFinancials);
         document.getElementById('prod-prime-type').addEventListener('change', calculateFinancials);
         document.getElementById('prod-prime-value').addEventListener('input', calculateFinancials);
 
-        // Charger la liste complète des articles existants au démarrage
-        async function loadCompanyProducts() {
-            const tbody = document.getElementById('products-table-body');
-            try {
-                const formData = new FormData();
-                formData.append('action', 'getCaisseData');
-                formData.append('userId', sessionData.userId);
-                formData.append('activeCompanyId', activeCompanyId);
+        // =========================================================================
+        // ACTIONS ET SOUMISSIONS FORMULAIRES (PRODUITS ET STOCKS)
+        // =========================================================================
 
-                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
-                const result = await response.json();
-
-                if (result.success && result.produits) {
-                    if (result.produits.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aucun produit dans la base. Utilisez le formulaire ci-dessus pour ajouter votre premier article !</td></tr>`;
-                        return;
-                    }
-
-                    tbody.innerHTML = result.produits.map(p => `
-                        <tr class="border-b border-[#222] hover:bg-[#141414] transition">
-                            <td class="p-4 font-semibold text-gray-400 text-xs">${p.categorie || 'Général'}</td>
-                            <td class="p-4 text-white font-medium">${p.nom}</td>
-                            <td class="p-4 text-xs text-gray-500">${p.composants || 'Aucun'}</td>
-                            <td class="p-4 text-emerald-400 font-bold">${p.prix.toFixed(2)} $US</td>
-                            <td class="p-4 text-xs text-blue-400">${p.valeurPrime ? p.valeurPrime + ' (' + p.typePrime + ')' : 'Aucune'}</td>
-                            <td class="p-4 text-center">
-                                <button onclick="deleteProduct(${p.id})" class="text-xs bg-red-950/40 border border-red-900 text-red-400 px-2 py-1 rounded hover:bg-red-900 hover:text-white transition cursor-pointer">Supprimer</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">Erreur : ${result.message || 'Impossible de lire les données.'}</td></tr>`;
-                }
-            } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">Erreur réseau lors de la récupération des produits.</td></tr>`;
-            }
-        }
-
-        // Soumission du formulaire pour ajouter le produit
+        // Soumission Produit (Ajout ou Modification)
         document.getElementById('form-add-product').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+            const editId = document.getElementById('edit-prod-id').value;
             const componentsString = selectedIngredients.map(i => `${i.nom}:${i.qty}`).join(', ');
+            
             const formData = new FormData();
-            formData.append('action', 'addProduct');
+            formData.append('action', editId ? 'updateProduct' : 'addProduct');
+            if (editId) formData.append('productId', editId);
             
             const productData = {
                 entrepriseId: activeCompanyId,
@@ -314,47 +447,167 @@
                 valeurPrime: parseFloat(document.getElementById('prod-prime-value').value) || 0,
                 composants: componentsString
             };
-
             formData.append('data', JSON.stringify(productData));
 
             try {
                 const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
                 const result = await response.json();
-
                 if (result.success) {
-                    alert("Produit ajouté avec succès !");
-                    document.getElementById('form-add-product').reset();
-                    selectedIngredients = [];
-                    renderIngredients();
+                    alert(editId ? "Produit modifié !" : "Produit ajouté !");
+                    resetProductForm();
                     loadCompanyProducts();
-                } else {
-                    alert("Erreur lors de l'enregistrement : " + result.message);
-                }
-            } catch (err) {
-                alert("Erreur réseau. Impossible de joindre le serveur de base de données.");
-            }
+                } else alert("Erreur : " + result.message);
+            } catch (err) { alert("Erreur réseau de base de données."); }
         });
 
-        async function deleteProduct(productId) {
-            if (!confirm("Voulez-vous vraiment retirer cet article définitivement ?")) return;
+        // Soumission Élément du Stock (Ajout ou Modification)
+        document.getElementById('form-add-stock-item').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-stock-id').value;
             
             const formData = new FormData();
-            formData.append('action', 'deleteProduct');
-            formData.append('productId', productId);
-            formData.append('entrepriseId', activeCompanyId);
-            formData.append('userId', sessionData.userId);
+            formData.append('action', editId ? 'updateStockItem' : 'addStockItem');
+            if (editId) formData.append('stockId', editId);
+
+            const stockData = {
+                entrepriseId: activeCompanyId,
+                nom: document.getElementById('stock-name').value,
+                type: document.getElementById('stock-type').value,
+                prixUnitaire: parseFloat(document.getElementById('stock-item-cost').value),
+                productible: document.getElementById('stock-is-productible').checked ? 'oui' : 'non',
+                primeProduction: parseFloat(document.getElementById('stock-prime-production').value) || 0,
+                recoltable: document.getElementById('stock-is-recoltable').checked ? 'oui' : 'non',
+                primeRecolte: parseFloat(document.getElementById('stock-prime-recolte').value) || 0,
+                composants: document.getElementById('stock-item-components').value
+            };
+            formData.append('data', JSON.stringify(stockData));
 
             try {
                 const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
                 const result = await response.json();
                 if (result.success) {
-                    loadCompanyProducts();
-                } else {
-                    alert("Erreur : " + result.message);
-                }
-            } catch (e) {
-                alert("Erreur de communication avec le serveur.");
+                    alert(editId ? "Élément mis à jour dans le stock !" : "Élément ajouté au stock !");
+                    resetStockForm();
+                    await loadStockOptions();
+                    renderIngredients(); // Met à jour les calculs de prix en direct si le coût à changé
+                } else alert("Erreur : " + result.message);
+            } catch (err) { alert("Erreur de liaison réseau."); }
+        });
+
+        // =========================================================================
+        // CONFIGURATIONS DES MODIFICATIONS (EDITS) ET SUPPRESSIONS
+        // =========================================================================
+
+        function setupEditProduct(id) {
+            const p = localProducts.find(item => item.id === id);
+            if (!p) return;
+
+            document.getElementById('edit-prod-id').value = p.id;
+            document.getElementById('prod-name').value = p.nom;
+            document.getElementById('prod-category').value = p.categorie;
+            document.getElementById('prod-price').value = p.prix;
+            document.getElementById('prod-prime-type').value = p.typePrime || 'Aucune';
+            document.getElementById('prod-prime-value').value = p.valeurPrime || 0;
+
+            selectedIngredients = [];
+            if (p.composants && p.composants !== 'Aucun') {
+                p.composants.split(',').forEach(compStr => {
+                    const parts = compStr.trim().split(':');
+                    if (parts.length === 2) {
+                        const name = parts[0];
+                        const qty = parseInt(parts[1]);
+                        const stockMatch = localStock.find(s => s.nom === name);
+                        selectedIngredients.push({
+                            id: stockMatch ? stockMatch.id : Math.random(),
+                            nom: name,
+                            qty: qty,
+                            prixUnitaire: stockMatch ? stockMatch.prixUnitaire : 0
+                        });
+                    }
+                });
             }
+            renderIngredients();
+            document.getElementById('btn-cancel-product').classList.remove('hidden');
+            document.getElementById('btn-submit-product').innerText = "Mettre à jour le produit";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setupEditStock(id) {
+            const s = localStock.find(item => item.id === id);
+            if (!s) return;
+
+            document.getElementById('edit-stock-id').value = s.id;
+            document.getElementById('stock-name').value = s.nom;
+            document.getElementById('stock-type').value = s.type;
+            document.getElementById('stock-item-cost').value = s.prixUnitaire || 0;
+            
+            const isProd = s.productible === 'oui';
+            const isRec = s.recoltable === 'oui';
+
+            document.getElementById('stock-is-productible').checked = isProd;
+            document.getElementById('stock-prime-production').value = s.primeProduction || 0;
+            document.getElementById('prod-prime-block').classList.toggle('hidden', !isProd);
+
+            document.getElementById('stock-is-recoltable').checked = isRec;
+            document.getElementById('stock-prime-recolte').value = s.primeRecolte || 0;
+            document.getElementById('recolte-prime-block').classList.toggle('hidden', !isRec);
+
+            document.getElementById('stock-item-components').value = s.composants || '';
+
+            document.getElementById('btn-cancel-stock').classList.remove('hidden');
+            document.getElementById('btn-submit-stock').innerText = "Mettre à jour l'élément";
+            document.getElementById('form-add-stock-item').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetProductForm() {
+            document.getElementById('form-add-product').reset();
+            document.getElementById('edit-prod-id').value = '';
+            selectedIngredients = [];
+            renderIngredients();
+            document.getElementById('btn-cancel-product').classList.add('hidden');
+            document.getElementById('btn-submit-product').innerText = "Enregistrer le produit";
+        }
+
+        function resetStockForm() {
+            document.getElementById('form-add-stock-item').reset();
+            document.getElementById('edit-stock-id').value = '';
+            document.getElementById('prod-prime-block').classList.add('hidden');
+            document.getElementById('recolte-prime-block').classList.add('hidden');
+            document.getElementById('btn-cancel-stock').classList.add('hidden');
+            document.getElementById('btn-submit-stock').innerText = "Enregistrer dans le stock";
+        }
+
+        document.getElementById('btn-cancel-product').addEventListener('click', resetProductForm);
+        document.getElementById('btn-cancel-stock').addEventListener('click', resetStockForm);
+
+        async function deleteProduct(productId) {
+            if (!confirm("Retirer cet article définitivement de la caisse ?")) return;
+            const formData = new FormData();
+            formData.append('action', 'deleteProduct');
+            formData.append('productId', productId);
+            formData.append('entrepriseId', activeCompanyId);
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                if (result.success) loadCompanyProducts();
+                else alert("Erreur: " + result.message);
+            } catch (e) { alert("Erreur serveur."); }
+        }
+
+        async function deleteStockItem(stockId) {
+            if (!confirm("Retirer cet élément du stock ? Cela n'effacera pas les menus existants mais faussera leurs coûts de revient.")) return;
+            const formData = new FormData();
+            formData.append('action', 'deleteStockItem');
+            formData.append('stockId', stockId);
+            formData.append('entrepriseId', activeCompanyId);
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    await loadStockOptions();
+                    renderIngredients();
+                } else alert("Erreur: " + result.message);
+            } catch (e) { alert("Erreur serveur."); }
         }
 
         // Initialisation globale
