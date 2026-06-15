@@ -1,3 +1,17 @@
+async function fetchWithRetry(url, options, retries = 2) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) throw new Error('Erreur réseau');
+            return await response.json();
+        } catch (err) {
+            console.warn(`Tentative ${i + 1} échouée.`, err);
+            if (i === retries - 1) throw err; // Si c'est la dernière tentative, on lâche l'affaire
+            await new Promise(r => setTimeout(r, 1000)); // Attend 1 seconde avant de réessayer
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
@@ -20,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         formData.append('userId', sessionData.userId);
         formData.append('token', sessionData.token);
         
-        const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+        const response = await fetchWithRetry(CONFIG.API_URL, { method: "POST", body: formData });
         const result = await response.json();
         if (result.success) {
             isAdmin = result.isAdmin;
@@ -28,7 +42,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
         }
     } catch (e) {
-        console.error("Erreur nav :", e);
+        console.error("Échec définitif après plusieurs essais");
+        sidebarContainer.innerHTML = ``;
     }
     
     // 3. Calcul des permissions
