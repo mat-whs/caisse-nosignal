@@ -4,92 +4,205 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion Entreprise - NoSignal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="/caisse-nosignal/gateway.js"></script>
     <script src="/caisse-nosignal/nav.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#1a1a1a] text-[#f5f5f5] font-sans antialiased min-h-screen relative">
+<body class="bg-[#1a1a1a] text-white min-h-screen flex">
 
-    <div id="loading-overlay" class="fixed inset-0 bg-[#111] z-50 flex flex-col items-center justify-center p-6 text-center">
-        <div id="loading-spinner" class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto"></div>
-        <p id="loading-text" class="text-lg text-gray-300 mt-4">Chargement de la gestion...</p>
-    </div>
+    <div id="sidebar-container" class="h-full shrink-0"></div>
 
-    <div id="dashboard-screen" class="w-full min-h-screen flex">
-        <div id="sidebar-container" class="h-full shrink-0"></div>
+    <main class="flex-1 flex flex-col min-w-0 bg-[#161616]">
+        <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
+            <div>
+                <h2 class="text-xl font-bold tracking-wide">Gestion de l'Entreprise</h2>
+                <p class="text-xs text-gray-500">Ajoutez et gérez les produits disponibles dans votre module de caisse.</p>
+            </div>
+        </header>
 
-        <main class="flex-1 bg-[#161616] flex flex-col min-w-0">
-            <header class="h-16 bg-[#111] border-b border-[#222] flex items-center justify-between px-8 shrink-0">
-                <h2 class="text-lg font-bold">Gestion des Produits</h2>
-                <div id="company-name-display" class="text-xs text-gray-400 bg-[#222] px-3 py-1 rounded"></div>
-            </header>
-
-            <div class="flex-1 p-8 overflow-y-auto">
-                <div class="max-w-4xl mx-auto space-y-6">
-                    <div class="bg-[#111] border border-[#222] rounded-xl p-6">
-                        <h3 class="text-xl font-bold mb-4">Liste des articles</h3>
-                        <div id="products-table-container" class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="text-gray-500 text-xs uppercase border-b border-[#222]">
-                                        <th class="pb-3">Nom</th>
-                                        <th class="pb-3">Catégorie</th>
-                                        <th class="pb-3">Prix ($)</th>
-                                        <th class="pb-3 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="products-tbody">
-                                    </tbody>
-                            </table>
+        <div class="flex-1 p-8 overflow-y-auto space-y-8">
+            
+            <div class="bg-[#111] border border-[#222] rounded-xl p-6 max-w-2xl">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span>➕</span> Ajouter un nouveau produit ou menu
+                </h3>
+                
+                <form id="form-add-product" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nom du produit</label>
+                            <input type="text" id="prod-name" required placeholder="Ex: Menu Burger XL" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Catégorie</label>
+                            <input type="text" id="prod-category" required placeholder="Ex: Menus, Boissons, Burgers" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
                         </div>
                     </div>
-                </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Prix de vente ($US)</label>
+                            <input type="number" id="prod-price" required step="0.01" min="0" placeholder="0.00" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Type de Prime Employee</label>
+                            <select id="prod-prime-type" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm cursor-pointer">
+                                <option value="Fixe">Fixe ($ par vente)</option>
+                                <option value="Pourcentage">Pourcentage (% du prix)</option>
+                                <option value="Aucune">Aucune prime</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valeur de la Prime</label>
+                            <input type="number" id="prod-prime-value" step="0.01" min="0" placeholder="0" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Composants / Ingrédients (Optionnel)</label>
+                        <input type="text" id="prod-components" placeholder="Ex: Pain:1, Viande:1, Fromage:2 (Séparés par des virgules)" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+                            Enregistrer le produit
+                        </button>
+                    </div>
+                </form>
             </div>
-        </main>
-    </div>
+
+            <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
+                <div class="p-4 bg-[#141414] border-b border-[#222]">
+                    <h3 class="font-bold text-white text-sm">Articles actuellement configurés dans l'établissement</h3>
+                </div>
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-[#161616] text-gray-400 uppercase text-xs">
+                        <tr>
+                            <th class="p-4">Catégorie</th>
+                            <th class="p-4">Nom de l'article</th>
+                            <th class="p-4">Composants</th>
+                            <th class="p-4">Prix de vente</th>
+                            <th class="p-4">Prime Collab.</th>
+                            <th class="p-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <tr>
+                            <td colspan="6" class="p-8 text-center text-gray-500 italic">Chargement de la liste des produits...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
 
     <script>
         const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
-        
-        async function initGestion() {
-            if (!sessionData) return window.location.replace('../');
+        const activeCompanyId = localStorage.getItem('active_company_id');
+
+        // Sécurité de base locale
+        if (!sessionData || !activeCompanyId) {
+            window.location.replace('/caisse-nosignal/');
+        }
+
+        // Charger la liste complète des articles existants au démarrage
+        async function loadCompanyProducts() {
+            const tbody = document.getElementById('products-table-body');
+            try {
+                const formData = new FormData();
+                formData.append('action', 'getCaisseData'); // On réutilise votre action API existante
+                formData.append('userId', sessionData.userId);
+                formData.append('activeCompanyId', activeCompanyId);
+
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+
+                if (result.success && result.produits) {
+                    if (result.produits.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aucun produit dans la base. Utilisez le formulaire ci-dessus pour ajouter votre premier article !</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = result.produits.map(p => `
+                        <tr class="border-b border-[#222] hover:bg-[#141414] transition">
+                            <td class="p-4 font-semibold text-gray-400 text-xs">${p.categorie || 'Général'}</td>
+                            <td class="p-4 text-white font-medium">${p.nom}</td>
+                            <td class="p-4 text-xs text-gray-500">${p.composants || 'Aucun'}</td>
+                            <td class="p-4 text-emerald-400 font-bold">${p.prix.toFixed(2)} $US</td>
+                            <td class="p-4 text-xs text-blue-400">${p.valeurPrime ? p.valeurPrime + ' (' + p.typePrime + ')' : 'Aucune'}</td>
+                            <td class="p-4 text-center">
+                                <button onclick="deleteProduct(${p.id})" class="text-xs bg-red-950/40 border border-red-900 text-red-400 px-2 py-1 rounded hover:bg-red-900 hover:text-white transition cursor-pointer">Supprimer</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">Erreur : ${result.message || 'Impossible de lire les données.'}</td></tr>`;
+                }
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">Erreur réseau lors de la récupération des produits.</td></tr>`;
+            }
+        }
+
+        // Soumission du formulaire pour ajouter le produit
+        document.getElementById('form-add-product').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            // Récupérer les données via une nouvelle action dans ton GS
             const formData = new FormData();
-            formData.append('action', 'getGestionData');
-            formData.append('userId', sessionData.userId);
-            formData.append('entrepriseId', localStorage.getItem('active_company_id'));
+            formData.append('action', 'addProduct'); // L'action côté Apps Script
+            
+            const productData = {
+                entrepriseId: activeCompanyId,
+                nom: document.getElementById('prod-name').value,
+                categorie: document.getElementById('prod-category').value,
+                prix: parseFloat(document.getElementById('prod-price').value),
+                typePrime: document.getElementById('prod-prime-type').value,
+                valeurPrime: parseFloat(document.getElementById('prod-prime-value').value) || 0,
+                composants: document.getElementById('prod-components').value
+            };
+
+            formData.append('data', JSON.stringify(productData));
 
             try {
                 const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
                 const result = await response.json();
-                
+
                 if (result.success) {
-                    renderProducts(result.produits);
-                    document.getElementById('loading-overlay').classList.add('hidden');
+                    alert("Produit ajouté avec succès !");
+                    document.getElementById('form-add-product').reset();
+                    loadCompanyProducts(); // Recharge le tableau instantanément
                 } else {
-                    alert("Accès refusé ou erreur : " + result.message);
+                    alert("Erreur lors de l'enregistrement : " + result.message);
+                }
+            } catch (err) {
+                alert("Erreur réseau. Impossible de joindre le serveur de base de données.");
+            }
+        });
+
+        // Fonction de suppression (Optionnel, appelle une action "deleteProduct")
+        async function deleteProduct(productId) {
+            if (!confirm("Voulez-vous vraiment retirer cet article définitivement ?")) return;
+            
+            const formData = new FormData();
+            formData.append('action', 'deleteProduct');
+            formData.append('productId', productId);
+            formData.append('entrepriseId', activeCompanyId);
+
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    loadCompanyProducts();
+                } else {
+                    alert("Erreur : " + result.message);
                 }
             } catch (e) {
-                console.error(e);
+                alert("Erreur de communication avec le serveur.");
             }
         }
 
-        function renderProducts(produits) {
-            const tbody = document.getElementById('products-tbody');
-            tbody.innerHTML = produits.map(p => `
-                <tr class="border-b border-[#222] text-sm">
-                    <td class="py-4">${p.nom}</td>
-                    <td class="py-4 text-gray-400">${p.categorie}</td>
-                    <td class="py-4 font-bold text-emerald-400">${p.prix} $</td>
-                    <td class="py-4 text-right">
-                        <button onclick="editProduct(${p.id})" class="text-blue-400 hover:text-blue-300 mr-3">Modifier</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        initGestion();
+        // Initialisation au chargement de la page
+        loadCompanyProducts();
     </script>
 </body>
 </html>
