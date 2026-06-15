@@ -4,18 +4,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const sessionData = JSON.parse(localStorage.getItem('caisse_session'));
     const activeCompanyId = localStorage.getItem('active_company_id');
+    const rootPath = "/caisse-nosignal/";
 
     if (!sessionData) {
-        window.location.replace('/caisse-nosignal/');
+        window.location.replace(rootPath);
         return;
     }
 
     try {
-        // --- MODIFICATION : Utilisation de FormData et requête POST comme le Dashboard ---
         const formData = new FormData();
         formData.append('action', 'nav');
         formData.append('userId', sessionData.userId);
         formData.append('token', sessionData.token);
+        formData.append('activeCompanyId', activeCompanyId || "");
 
         const response = await fetch(CONFIG.API_URL, {
             method: "POST",
@@ -24,12 +25,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         const result = await response.json();
 
-        if (!result.success) throw new Error(result.message);
+        // Sécurité critique : si pas d'entreprise active valide ou droit révoqué, redirection forcée
+        if (!result.success || !result.isAuthorized) {
+            window.location.replace(`${rootPath}choix-entreprise/`);
+            return;
+        }
 
         const isAdmin = result.isAdmin;
         const entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
         const isPatronOfActive = entreprisesPatron.includes(String(activeCompanyId));
-        const rootPath = "/caisse-nosignal/";
         const isActive = (folder) => window.location.pathname.includes(`/${folder}/`);
         const roleLabel = isAdmin ? "Administrateur" : (isPatronOfActive ? "Patron" : "Employé");
 
@@ -62,21 +66,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     ${isAdmin ? `
                         <div class="pt-4 pb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest pl-3">Administration</div>
-                        <a href="${rootPath}admin/roles/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/roles') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                            <span>🔑</span> <span>Rôles</span>
-                        </a>
-                        <a href="${rootPath}admin/site/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/site') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                            <span>⚙️</span> <span>Site</span>
-                        </a>
                         <a href="${rootPath}admin/utilisateurs/" class="flex items-center space-x-3 p-3 rounded ${isActive('admin/utilisateurs') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
                             <span>👥</span> <span>Utilisateurs</span>
                         </a>
                     ` : ''}
                 </nav>
             </div>
-            <div class="p-4 border-t border-[#222] flex items-center justify-between">
-                <div><p class="font-bold text-white text-sm">${result.username || 'Utilisateur'}</p><p class="text-[10px] text-gray-500">${roleLabel}</p></div>
-                <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded cursor-pointer">Déconnexion</button>
+            <div class="p-4 border-t border-[#222] flex items-center justify-between gap-2">
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-white text-sm truncate">${result.username || 'Utilisateur'}</p>
+                    <p class="text-[10px] text-gray-500">${roleLabel}</p>
+                    <p class="text-[11px] text-emerald-400 font-semibold truncate mt-0.5 bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-900/40 w-max max-w-full">${result.activeCompanyName || 'Aucune'}</p>
+                </div>
+                <div class="flex items-center space-x-1 shrink-0">
+                    ${result.hasMultipleCompanies ? `
+                        <button id="btn-change-company-nav" class="text-[10px] bg-[#222] hover:bg-neutral-800 border border-[#333] text-gray-300 px-2 py-1.5 rounded cursor-pointer transition">Changer</button>
+                    ` : ''}
+                    <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 border border-[#333] px-2 py-1.5 rounded cursor-pointer transition text-white">Quitter</button>
+                </div>
             </div>
         </aside>`;
 
@@ -84,6 +91,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             localStorage.clear();
             window.location.replace(rootPath);
         });
+
+        if (result.hasMultipleCompanies) {
+            document.getElementById('btn-change-company-nav').addEventListener('click', () => {
+                window.location.replace(`${rootPath}choix-entreprise/`);
+            });
+        }
 
     } catch (e) {
         console.error("Erreur navigation :", e);
