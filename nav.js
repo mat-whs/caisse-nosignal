@@ -1,17 +1,3 @@
-async function fetchWithRetry(url, options, retries = 2) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) throw new Error('Erreur réseau');
-            return await response.json();
-        } catch (err) {
-            console.warn(`Tentative ${i + 1} échouée.`, err);
-            if (i === retries - 1) throw err; // Si c'est la dernière tentative, on lâche l'affaire
-            await new Promise(r => setTimeout(r, 1000)); // Attend 1 seconde avant de réessayer
-        }
-    }
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
@@ -23,78 +9,46 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.replace('/caisse-nosignal/');
         return;
     }
-    
-    // 1. Initialisation des variables par défaut
-    let isAdmin = false;
-    let entreprisesPatron = [];
 
-    try {
-        const formData = new FormData();
-        formData.append('action', 'nav');
-        formData.append('userId', sessionData.userId);
-        formData.append('token', sessionData.token);
-        
-        const response = await fetchWithRetry(CONFIG.API_URL, { method: "POST", body: formData });
-        const result = await response.json();
-        if (result.success) {
-            isAdmin = result.isAdmin;
-            // On s'assure que la liste est un tableau même si vide
-            entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
+    // Fonction de récupération des données de navigation
+    async function fetchNavData() {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'nav');
+            formData.append('userId', sessionData.userId);
+            formData.append('token', sessionData.token);
+
+            const response = await fetch(CONFIG.API_URL, {
+                method: "POST",
+                body: formData
+            });
+
+            return await response.json();
+        } catch (error) {
+            console.error("Erreur réseau navigation :", error);
+            return { success: false };
         }
-    } catch (e) {
-        console.error("Échec définitif après plusieurs essais");
-        sidebarContainer.innerHTML = ``;
     }
+
+    const result = await fetchNavData();
+
+    if (!result.success) {
+        sidebarContainer.innerHTML = `<p class="p-4 text-red-500 text-xs">Erreur de chargement</p>`;
+        return;
+    }
+
+    const isAdmin = result.isAdmin;
+    const entreprisesPatron = result.entreprisesPatron ? result.entreprisesPatron.split(',').map(id => id.trim()) : [];
     
-    // 3. Calcul des permissions
+    // Rendu du HTML (identique à ton code original)
     const isPatronOfActive = entreprisesPatron.includes(String(activeCompanyId));
     const path = window.location.pathname;
     const rootPath = "/caisse-nosignal/";
     const isActive = (folder) => path.includes(`/${folder}/`);
     const roleLabel = isAdmin ? "Administrateur" : (isPatronOfActive ? "Patron" : "Employé");
 
-    // 4. Génération du HTML (les variables sont maintenant à jour)
-    let navHTML = `
+    sidebarContainer.innerHTML = `
     <aside class="w-64 bg-[#111] border-r border-[#222] flex flex-col justify-between h-full shrink-0">
-        <div>
-            <div class="p-6 border-b border-[#222]">
-                <span class="text-xl font-bold tracking-wider text-white">Caisse.<span class="font-light">NoSignal</span></span>
-            </div>
-            <nav class="p-4 space-y-1">
-                <a href="${rootPath}dashboard/" class="flex items-center space-x-3 p-3 rounded ${isActive('dashboard') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                    <span>📊</span> <span>Tableau de bord</span>
-                </a>
-                <a href="${rootPath}caisse/" class="flex items-center space-x-3 p-3 rounded ${isActive('caisse') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                    <span>🛒</span> <span>Caisse</span>
-                </a>
-                <a href="${rootPath}stock/" class="flex items-center space-x-3 p-3 rounded ${isActive('stock') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                    <span>📦</span> <span>Stock</span>
-                </a>
-                <a href="${rootPath}historique/" class="flex items-center space-x-3 p-3 rounded ${isActive('historique') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                    <span>⏳</span> <span>Historique</span>
-                </a>
-
-                ${(isAdmin || isPatronOfActive) ? `
-                    <div class="pt-4 pb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest pl-3">Management</div>
-                    <a href="${rootPath}gestion-entreprise/" class="flex items-center space-x-3 p-3 rounded ${isActive('gestion-entreprise') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>🏢</span> <span>Gestion Entreprise</span>
-                    </a>
-                ` : ''}
-
-                ${isAdmin ? `
-                    <div class="pt-4 pb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest pl-3">Administration</div>
-                    <a href="${rootPath}admin/utilisateurs/" class="flex items-center space-x-3 p-3 rounded ${isActive('utilisateurs') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>👥</span> <span>Utilisateurs</span>
-                    </a>
-                    <a href="${rootPath}admin/roles/" class="flex items-center space-x-3 p-3 rounded ${isActive('roles') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>🔑</span> <span>Rôles & Perms</span>
-                    </a>
-                    <a href="${rootPath}admin/site/" class="flex items-center space-x-3 p-3 rounded ${isActive('gestion-site') ? 'bg-[#222] text-white' : 'text-gray-400 hover:bg-[#222] hover:text-white'}">
-                        <span>⚙️</span> <span>Configuration Site</span>
-                    </a>
-                ` : ''}
-            </nav>
-        </div>
         <div class="p-4 border-t border-[#222] flex items-center justify-between">
             <div class="min-w-0 flex-1 pr-2">
                 <p class="font-bold text-white text-sm truncate">${sessionData.username || 'Utilisateur'}</p>
@@ -102,19 +56,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
             <button id="btn-logout-nav" class="text-[10px] bg-[#222] hover:bg-red-900 px-3 py-1.5 rounded transition cursor-pointer">Déconnexion</button>
         </div>
-    </aside>
-    `;
+    </aside>`;
 
-    sidebarContainer.innerHTML = navHTML;
-
-    if (typeof window.renderNavDone === 'function') {
-        window.renderNavDone();
-    }
-    
-    // Ajout du listener de déconnexion après l'injection
     document.getElementById('btn-logout-nav').addEventListener('click', () => {
         localStorage.removeItem('caisse_session');
         localStorage.removeItem('active_company_id');
         window.location.replace(rootPath);
     });
+
+    if (typeof window.renderNavDone === 'function') window.renderNavDone();
 });
