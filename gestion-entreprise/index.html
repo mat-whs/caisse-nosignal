@@ -22,32 +22,23 @@
 
     <div id="sidebar-container" class="h-full shrink-0"></div>
 
-    <main class="flex-1 p-8 bg-[#161616]">
-        <div class="mb-8">
-            <h2 class="text-xl font-bold tracking-wide">Gestion de l'Entreprise</h2>
-            <p class="text-xs text-gray-500">Vue d'ensemble : Stock, Produits et Menus.</p>
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8 bg-[#161616]">
+        <div class="bg-[#1a1a1a] p-4 rounded border border-[#222]">
+            <h3 class="font-bold mb-4 text-blue-400">Section Stock</h3>
+            <div id="stock-container" class="scroll-zone">
+                </div>
         </div>
     
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div class="bg-[#1a1a1a] p-4 rounded border border-[#222]">
-                <h3 class="font-bold mb-4 text-blue-400">Section Stock</h3>
-                <div id="section-stock" class="scroll-zone">
-                    </div>
-            </div>
+        <div class="bg-[#1a1a1a] p-4 rounded border border-[#222]">
+            <h3 class="font-bold mb-4 text-emerald-400">Section Produits</h3>
+            <div id="produits-container" class="scroll-zone">
+                </div>
+        </div>
     
-            <div class="bg-[#1a1a1a] p-4 rounded border border-[#222]">
-                <h3 class="font-bold mb-4 text-emerald-400">Section Produits</h3>
-                <div id="section-produits" class="scroll-zone">
-                    </div>
-            </div>
-    
-            <div class="bg-[#1a1a1a] p-4 rounded border border-[#222]">
-                <h3 class="font-bold mb-4 text-purple-400">Section Menus</h3>
-                <div id="section-menus" class="scroll-zone">
-                    </div>
-            </div>
-    
+        <div class="bg-[#1a1a1a] p-4 rounded border border-[#222]">
+            <h3 class="font-bold mb-4 text-purple-400">Section Menus</h3>
+            <div id="menus-container" class="scroll-zone">
+                </div>
         </div>
     </main>
 
@@ -449,24 +440,22 @@
         }
         init();
 
-        function showSection(sectionId) {
-            console.log("Tentative d'affichage de : " + sectionId); // Debug
-            
-            // 1. Masquer toutes les sections
-            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-            
-            // 2. Afficher la section demandée
-            const target = document.getElementById('section-' + sectionId);
-            if (target) {
-                target.classList.remove('hidden');
-            } else {
-                console.error("Section introuvable : section-" + sectionId);
-            }
-        }
-
         window.onload = function() {
-            showSection('stock'); // Affiche 'stock' par défaut
+            // Appelez ici les fonctions qui récupèrent vos données depuis Google Sheets
+            // Exemple (adaptez selon vos noms de fonctions réels) :
+            google.script.run.withSuccessHandler(renderStock).getStockData();
+            google.script.run.withSuccessHandler(renderProduits).getProduitsData();
+            google.script.run.withSuccessHandler(renderMenus).getMenusData();
         };
+    
+        // Exemple de fonction de rendu à adapter :
+        function renderStock(data) {
+            const container = document.getElementById('stock-container');
+            container.innerHTML = ""; // Vider avant d'ajouter
+            data.forEach(item => {
+                container.innerHTML += `<div class="p-2 border-b border-[#333]">${item.nom}</div>`;
+            });
+        }
         
     </script>
 
