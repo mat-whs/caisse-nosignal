@@ -7,6 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/caisse-nosignal/gateway.js"></script>
     <script src="/caisse-nosignal/nav.js"></script>
+    
+    <style>
+        .content-section {
+            height: calc(100vh - 150px); /* Ajustez selon la hauteur de votre header */
+            overflow-y: auto;
+            padding-bottom: 2rem;
+        }
+        .hidden { display: none; }
+    </style>
 </head>
 <body class="bg-[#1a1a1a] text-white min-h-screen flex">
 
@@ -20,7 +29,33 @@
             </div>
         </header>
 
-        <div class="flex-1 p-8 overflow-y-auto space-y-12">
+        <!-- Navigation -->
+        <div class="px-8 pt-6 flex gap-2">
+            <button onclick="showSection('stock')" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-bold transition">Stock</button>
+            <button onclick="showSection('produits')" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded text-sm font-bold transition">Produits</button>
+            <button onclick="showSection('menus')" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded text-sm font-bold transition">Menus</button>
+        </div>
+        
+        <!-- Conteneur principal scrollable -->
+        <div id="main-content" class="flex-1 p-8 overflow-y-auto">
+            
+            <!-- SECTION STOCK -->
+            <div id="section-stock" class="content-section">
+                <!-- Insérez ici le code de votre section STOCK actuel -->
+            </div>
+        
+            <!-- SECTION PRODUITS -->
+            <div id="section-produits" class="content-section hidden">
+                <!-- Insérez ici le code de votre section PRODUITS actuel -->
+            </div>
+        
+            <!-- SECTION MENUS -->
+            <div id="section-menus" class="content-section hidden">
+                <h2 class="text-xl font-bold mb-6">Gestion des Menus</h2>
+                <!-- Copiez le formulaire 'form-add-product' ici, adaptez les ID en 'form-add-menu' -->
+            </div>
+        
+        </div>
             
             <div class="space-y-6">
                 <div class="bg-[#111] border border-[#222] rounded-xl p-6 max-w-4xl">
@@ -632,6 +667,14 @@
             await loadCompanyProducts();
         }
         init();
+
+        function showSection(sectionId) {
+            // Masquer toutes les sections
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            // Afficher la section demandée
+            document.getElementById('section-' + sectionId).classList.remove('hidden');
+        }
+        
     </script>
 </body>
 </html>
