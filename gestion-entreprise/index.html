@@ -9,8 +9,12 @@
     <script src="/caisse-nosignal/nav.js"></script>
     
     <style>
+        .content-section {
+            height: calc(100vh - 150px);
+            overflow-y: auto;
+            padding-bottom: 2rem;
+        }
         .hidden { display: none !important; }
-        .content-section { height: calc(100vh - 150px); overflow-y: auto; }
     </style>
 </head>
 <body class="bg-[#1a1a1a] text-white min-h-screen flex">
@@ -678,6 +682,10 @@
                 console.error("Section introuvable : section-" + sectionId);
             }
         }
+
+        window.onload = function() {
+            showSection('stock'); // Affiche 'stock' par défaut
+        };
         
     </script>
 
