@@ -43,12 +43,13 @@
 
                         <div class="bg-[#161616] border border-[#222] rounded-lg p-4 space-y-3">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Sélection des composants (Depuis le Stock)</label>
-                            <div class="flex gap-2">
-                                <select id="stock-selector" class="flex-1 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none text-sm">
-                                    <option value="">Chargement du stock...</option>
-                                </select>
-                                <input type="number" id="stock-qty" min="1" value="1" class="w-20 bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-center text-white text-sm focus:outline-none">
-                                <button type="button" id="btn-add-ingredient" class="bg-[#222] hover:bg-[#333] text-white px-4 py-2 rounded text-xs font-bold transition">Ajouter</button>
+                            <div class="bg-[#111] border border-[#222] rounded-xl flex flex-col mb-4">
+                                <div class="p-3 border-b border-[#222] bg-[#141414]">
+                                    <h4 class="font-bold text-sm text-gray-300">Catalogue du stock (cliquez pour ajouter)</h4>
+                                </div>
+                                <div id="stock-list-container" class="overflow-y-auto max-h-48 p-2 space-y-1 scroll-zone">
+                                    <p class="text-sm text-gray-500 text-center py-4">Chargement du stock...</p>
+                                </div>
                             </div>
 
                             <div class="overflow-x-auto pt-2">
@@ -274,14 +275,19 @@
                     
                     // Remplir le selecteur de composition de menu
                     const selector = document.getElementById('stock-selector');
-                    selector.innerHTML = '<option value="">-- Choisir un ingrédient du stock --</option>' +
-                        localStock.map(s => `<option value="${s.id}">${s.nom} (${s.type})</option>`).join('');
+                    const container = document.getElementById('stock-list-container');
 
                     // Remplir la table de gestion complète du stock
                     const tbody = document.getElementById('stock-items-table-body');
                     if(localStock.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aucun élément configuré dans le stock.</td></tr>`;
-                        return;
+                        container.innerHTML = `<p class="text-sm text-gray-500 text-center py-4 italic">Stock vide.</p>`;
+                    } else {
+                        container.innerHTML = localStock.map(s => `
+                            <button type="button" onclick="addIngredientToMenu(${s.id})" class="w-full text-left bg-[#222] hover:bg-[#333] p-2 rounded text-sm text-white flex justify-between items-center transition border border-transparent hover:border-blue-500">
+                                <span>${s.nom} <span class="text-gray-500 text-xs font-semibold">(${s.type})</span></span>
+                                <span class="text-blue-400 font-bold">${(s.prixUnitaire || 0).toFixed(2)} $US</span>
+                            </button>
+                        `).join('');
                     }
 
                     tbody.innerHTML = localStock.map(s => `
@@ -344,33 +350,36 @@
         // LOGIQUE DE COMPOSITION DES ARTICLES (PRODUITS)
         // =========================================================================
 
-        document.getElementById('btn-add-ingredient').addEventListener('click', () => {
-            const selector = document.getElementById('stock-selector');
-            const qtyInput = document.getElementById('stock-qty');
-            const stockId = parseInt(selector.value);
-            const qty = parseInt(qtyInput.value);
-
-            if (!stockId || qty < 1) return;
-
+        function addIngredientToMenu(stockId) {
             const targetItem = localStock.find(s => s.id === stockId);
             if (!targetItem) return;
-
+        
             const existing = selectedIngredients.find(i => i.id === stockId);
             if (existing) {
-                existing.qty += qty;
+                existing.qty += 1;
             } else {
                 selectedIngredients.push({
                     id: targetItem.id,
                     nom: targetItem.nom,
-                    qty: qty,
+                    qty: 1,
                     prixUnitaire: targetItem.prixUnitaire || 0
                 });
             }
-            selector.value = "";
-            qtyInput.value = "1";
             renderIngredients();
-        });
+        }
+        
+        function updateIngredientQty(id, newQty) {
+            const qty = parseInt(newQty, 10);
+            if (isNaN(qty) || qty <= 0) { 
+                removeIngredient(id); 
+            } else { 
+                const item = selectedIngredients.find(i => i.id === id); 
+                if (item) item.qty = qty; 
+                renderIngredients(); 
+            }
+        }
 
+        
         function removeIngredient(id) {
             selectedIngredients = selectedIngredients.filter(i => i.id !== id);
             renderIngredients();
@@ -387,7 +396,9 @@
             tbody.innerHTML = selectedIngredients.map(i => `
                 <tr class="border-b border-[#222]">
                     <td class="py-2 text-white font-medium">${i.nom}</td>
-                    <td class="py-2 text-center text-gray-400">${i.qty}</td>
+                    <td class="py-2 text-center">
+                        <input type="number" min="1" value="${i.qty}" onchange="updateIngredientQty(${i.id}, this.value)" class="w-14 bg-[#222] border border-[#333] text-white text-center rounded py-1 text-xs focus:outline-none focus:border-blue-500">
+                    </td>
                     <td class="py-2 text-right text-gray-500">${(i.prixUnitaire || 0).toFixed(2)} $US</td>
                     <td class="py-2 text-right text-emerald-500 font-medium">${((i.prixUnitaire || 0) * i.qty).toFixed(2)} $US</td>
                     <td class="py-2 text-center">
