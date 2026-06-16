@@ -261,6 +261,7 @@
         async function loadStockOptions() {
             try {
                 const formData = new FormData();
+                formData.append('userId', sessionData.userId);
                 formData.append('action', 'getStockData');
                 formData.append('userId', sessionData.userId);
                 formData.append('activeCompanyId', activeCompanyId);
@@ -436,6 +437,7 @@
             
             const formData = new FormData();
             formData.append('action', editId ? 'updateProduct' : 'addProduct');
+            formData.append('userId', sessionData.userId);
             if (editId) formData.append('productId', editId);
             
             const productData = {
@@ -584,6 +586,7 @@
         async function deleteProduct(productId) {
             if (!confirm("Retirer cet article définitivement de la caisse ?")) return;
             const formData = new FormData();
+            formData.append('userId', sessionData.userId);
             formData.append('action', 'deleteProduct');
             formData.append('productId', productId);
             formData.append('entrepriseId', activeCompanyId);
@@ -598,6 +601,7 @@
         async function deleteStockItem(stockId) {
             if (!confirm("Retirer cet élément du stock ? Cela n'effacera pas les menus existants mais faussera leurs coûts de revient.")) return;
             const formData = new FormData();
+            formData.append('userId', sessionData.userId);
             formData.append('action', 'deleteStockItem');
             formData.append('stockId', stockId);
             formData.append('entrepriseId', activeCompanyId);
