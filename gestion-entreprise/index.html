@@ -9,12 +9,8 @@
     <script src="/caisse-nosignal/nav.js"></script>
     
     <style>
-        .content-section {
-            height: calc(100vh - 150px); /* Ajustez selon la hauteur de votre header */
-            overflow-y: auto;
-            padding-bottom: 2rem;
-        }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+        .content-section { height: calc(100vh - 150px); overflow-y: auto; }
     </style>
 </head>
 <body class="bg-[#1a1a1a] text-white min-h-screen flex">
@@ -669,12 +665,41 @@
         init();
 
         function showSection(sectionId) {
-            // Masquer toutes les sections
+            console.log("Tentative d'affichage de : " + sectionId); // Debug
+            
+            // 1. Masquer toutes les sections
             document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-            // Afficher la section demandée
-            document.getElementById('section-' + sectionId).classList.remove('hidden');
+            
+            // 2. Afficher la section demandée
+            const target = document.getElementById('section-' + sectionId);
+            if (target) {
+                target.classList.remove('hidden');
+            } else {
+                console.error("Section introuvable : section-" + sectionId);
+            }
         }
         
     </script>
+
+    <div class="px-8 pt-6 flex gap-2">
+    <button onclick="showSection('stock')" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-bold transition">Stock</button>
+    <button onclick="showSection('produits')" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 rounded text-sm font-bold transition">Produits</button>
+    <button onclick="showSection('menus')" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded text-sm font-bold transition">Menus</button>
+</div>
+
+<div id="main-content" class="flex-1 p-8 overflow-y-auto">
+    <div id="section-stock" class="content-section">
+        <h2 class="text-white">Section Stock</h2>
+        </div>
+
+    <div id="section-produits" class="content-section hidden">
+        <h2 class="text-white">Section Produits</h2>
+        </div>
+
+    <div id="section-menus" class="content-section hidden">
+        <h2 class="text-white">Section Menus</h2>
+        </div>
+</div>
+    
 </body>
 </html>
