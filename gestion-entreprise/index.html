@@ -467,6 +467,7 @@
             
             const formData = new FormData();
             formData.append('action', editId ? 'updateStockItem' : 'addStockItem');
+            formData.append('userId', sessionData.userId);
             if (editId) formData.append('stockId', editId);
 
             const stockData = {
