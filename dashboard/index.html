@@ -87,8 +87,7 @@
                 // Requête fetch mise en conformité avec le comportement attendu par Apps Script
                 const response = await fetch(CONFIG.API_URL, { 
                     method: "POST", 
-                    body: params,
-                    redirect: "follow" // Force le navigateur à suivre la redirection de sécurité Google
+                    body: params
                 });
                 
                 const result = await response.json();
