@@ -232,11 +232,16 @@
                 </div>
             </div>
 
-            <div class="content-section bg-[#1a1a1a] p-4 rounded border border-[#222]">
-                <h3 class="text-lg font-bold mb-4">Menus</h3>
-                <div id="menus-container" class="space-y-2"></div>
+            <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
+                <form id="menu-form" class="bg-[#222] p-4 rounded mt-4">
+                    <h3 class="text-white mb-2">Ajouter un Menu</h3>
+                    <input type="text" id="menu-name" placeholder="Nom du menu" class="w-full mb-2 p-2 rounded">
+                    <input type="number" id="menu-price" placeholder="Prix" class="w-full mb-2 p-2 rounded">
+                    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Enregistrer</button>
+                </form>
+    
+                <div id="menus-container"></div>
             </div>
-            
         </div>
     </main>
 
@@ -662,6 +667,40 @@
                 </div>
             `).join('');
         }
+
+        document.getElementById('menu-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('action', 'addMenu'); // Doit correspondre à ton Code.gs
+            formData.append('userId', sessionData.userId);
+            formData.append('data', JSON.stringify({
+                entrepriseId: activeCompanyId,
+                nom: document.getElementById('menu-name').value,
+                prix: document.getElementById('menu-price').value
+            }));
+        
+            const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+            const result = await response.json();
+            if(result.success) {
+                loadMenus(); // Rafraîchit la liste
+                alert("Menu ajouté !");
+            }
+        });
+
+        // Côté JS dans ton HTML
+            async function loadMenus() {
+                const formData = new FormData();
+                formData.append('userId', sessionData.userId);
+                formData.append('action', 'getMenus'); // Correspond à l'action ajoutée dans Code.gs
+                formData.append('entrepriseId', activeCompanyId);
+                
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderMenus(result.data); // Affiche la liste
+                }
+            }
         
         // Initialisation globale
         async function init() {
