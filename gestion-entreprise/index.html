@@ -238,7 +238,7 @@
                         <span>🍔</span> Ajouter un Menu (Caisse)
                     </h3>
             
-                    <form id="add-menu-form" class="space-y-4">
+                    <form id="menu-form" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" for="menu-nom">Nom du Menu</label>
@@ -250,9 +250,50 @@
                             </div>
                         </div>
             
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" for="menu-composants">Composants</label>
-                            <input type="text" id="menu-composants" placeholder="Ex: Poudre Cola:0.1, Gobelet:1" class="w-full bg-[#1c1c1c] border border-[#333] rounded px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm">
+                        <div class="bg-[#161616] border border-[#222] rounded-lg p-4 space-y-3 mb-4 col-span-full">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Sélection des composants (Depuis le Stock)</label>
+                            <div class="bg-[#111] border border-[#222] rounded-xl flex flex-col mb-4">
+                                <div class="p-3 border-b border-[#222] bg-[#141414]">
+                                    <h4 class="font-bold text-sm text-gray-300">Catalogue du stock (cliquez pour ajouter)</h4>
+                                </div>
+                                <div id="menu-stock-list-container" class="overflow-y-auto max-h-48 p-2 space-y-1 scroll-zone">
+                                    <p class="text-sm text-gray-500 text-center py-4">Chargement du stock...</p>
+                                </div>
+                            </div>
+                        
+                            <div class="overflow-x-auto pt-2">
+                                <table class="w-full text-left text-xs border-t border-[#222]">
+                                    <thead class="text-gray-500 uppercase">
+                                        <tr>
+                                            <th class="py-2">Ingrédient</th>
+                                            <th class="py-2 text-center">Quantité</th>
+                                            <th class="py-2 text-right">Coût Unit.</th>
+                                            <th class="py-2 text-right">Sous-Total</th>
+                                            <th class="py-2 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="menu-ingredients-list-body">
+                                        <tr>
+                                            <td colspan="5" class="py-4 text-center text-gray-600 italic">Aucun ingrédient rattaché.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#141414] border border-[#222] rounded-lg p-4 mb-4 col-span-full">
+                            <div>
+                                <span class="block text-[10px] text-gray-500 font-bold uppercase">Coût Total Ingrédients</span>
+                                <span id="menu-summary-cost" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-gray-500 font-bold uppercase">Impact Prime</span>
+                                <span id="menu-summary-prime" class="text-sm font-bold text-gray-300">0.00 $US</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] text-gray-500 font-bold uppercase">Marge Entreprise</span>
+                                <span id="menu-summary-margin" class="text-base font-black text-gray-400">0.00 $US</span>
+                            </div>
                         </div>
             
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -350,7 +391,7 @@
                     // Remplir le selecteur de composition de menu
                     const selector = document.getElementById('stock-selector');
                     const container = document.getElementById('stock-list-container');
-
+                    
                     // Remplir la table de gestion complète du stock
                     const tbody = document.getElementById('stock-items-table-body');
                     if(localStock.length === 0) {
@@ -364,6 +405,19 @@
                         `).join('');
                     }
 
+                    // Remplir aussi le selecteur de composition pour les Menus
+                    const menuContainer = document.getElementById('menu-stock-list-container');
+                    if(localStock.length === 0) {
+                        menuContainer.innerHTML = `<p class="text-sm text-gray-500 text-center py-4 italic">Stock vide.</p>`;
+                    } else {
+                        menuContainer.innerHTML = localStock.map(s => `
+                            <button type="button" onclick="addIngredientToActualMenu(${s.id})" class="w-full text-left bg-[#222] hover:bg-[#333] p-2 rounded text-sm text-white flex justify-between items-center transition border border-transparent hover:border-blue-500">
+                                <span>${s.nom} <span class="text-gray-500 text-xs font-semibold">(${s.type})</span></span>
+                                <span class="text-blue-400 font-bold">${(s.prixUnitaire || 0).toFixed(2)} $US</span>
+                            </button>
+                        `).join('');
+                    }
+                    
                     tbody.innerHTML = localStock.map(s => `
                         <tr class="border-b border-[#222] hover:bg-[#141414] transition">
                             <td class="p-4 text-xs font-semibold uppercase text-gray-500">${s.type}</td>
@@ -766,17 +820,20 @@
             }
 
         // Événement à la soumission du formulaire d'ajout
-        document.getElementById('add-menu-form').addEventListener('submit', async function(e) {
+        document.getElementById('menu-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // Crée la chaîne de texte à partir du tableau des ingrédients choisis
+            const componentsString = selectedMenuIngredients.map(i => `${i.nom}:${i.qty}`).join(', ');
             
             const menuData = {
                 entrepriseId: activeCompanyId,
                 categorie: document.getElementById('menu-categorie').value,
                 nom: document.getElementById('menu-nom').value,
-                composants: document.getElementById('menu-composants').value,
+                composants: componentsString, // <-- Utilise la chaîne formatée ici
                 prix: parseFloat(document.getElementById('menu-prix').value),
                 typePrime: document.getElementById('menu-type-prime').value,
-                valeurPrime: parseFloat(document.getElementById('menu-valeur-prime').value)
+                valeurPrime: parseFloat(document.getElementById('menu-valeur-prime').value) || 0
             };
         
             const formData = new FormData();
@@ -789,7 +846,11 @@
                 const result = await response.json();
                 if (result.success) {
                     alert("Menu ajouté avec succès !");
-                    document.getElementById('add-menu-form').reset();
+                    document.getElementById('menu-form').reset();
+
+                    selectedMenuIngredients = [];
+                    renderMenuIngredients();
+                    
                     await loadMenus(); // Rafraîchit le tableau
                 } else {
                     alert("Erreur lors de l'ajout : " + result.message);
@@ -862,6 +923,94 @@
                 console.error("Erreur de communication :", error);
             }
         }
+
+        let selectedMenuIngredients = [];
+        
+        function addIngredientToActualMenu(stockId) {
+            const targetItem = localStock.find(s => s.id === stockId);
+            if (!targetItem) return;
+        
+            const existing = selectedMenuIngredients.find(i => i.id === stockId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                selectedMenuIngredients.push({
+                    id: targetItem.id,
+                    nom: targetItem.nom,
+                    qty: 1,
+                    prixUnitaire: targetItem.prixUnitaire || 0
+                });
+            }
+            renderMenuIngredients();
+        }
+        
+        function updateMenuIngredientQty(id, newQty) {
+            const qty = parseFloat(newQty, 10);
+            if (isNaN(qty) || qty <= 0) {
+                removeMenuIngredient(id);
+            } else {
+                const item = selectedMenuIngredients.find(i => i.id === id);
+                if (item) item.qty = qty;
+                renderMenuIngredients();
+            }
+        }
+        
+        function removeMenuIngredient(id) {
+            selectedMenuIngredients = selectedMenuIngredients.filter(i => i.id !== id);
+            renderMenuIngredients();
+        }
+        
+        function renderMenuIngredients() {
+            const tbody = document.getElementById('menu-ingredients-list-body');
+            if (selectedMenuIngredients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-600 italic">Aucun ingrédient rattaché.</td></tr>`;
+                calculateMenuFinancials();
+                return;
+            }
+        
+            tbody.innerHTML = selectedMenuIngredients.map(i => `
+                <tr class="border-b border-[#222]">
+                    <td class="py-2 text-white font-medium">${i.nom}</td>
+                    <td class="py-2 text-center">
+                        <input type="number" step="0.1" min="0.1" value="${i.qty}" onchange="updateMenuIngredientQty(${i.id}, this.value)" class="w-14 bg-[#222] border border-[#333] text-white text-center rounded py-1 text-xs focus:outline-none focus:border-blue-500">
+                    </td>
+                    <td class="py-2 text-right text-gray-500">${(i.prixUnitaire || 0).toFixed(2)} $US</td>
+                    <td class="py-2 text-right text-emerald-500 font-medium">${((i.prixUnitaire || 0) * i.qty).toFixed(2)} $US</td>
+                    <td class="py-2 text-center">
+                        <button type="button" onclick="removeMenuIngredient(${i.id})" class="text-red-400 hover:text-red-500">❌</button>
+                    </td>
+                </tr>
+            `).join('');
+            calculateMenuFinancials();
+        }
+        
+        function calculateMenuFinancials() {
+            const price = parseFloat(document.getElementById('menu-prix').value) || 0;
+            const primeType = document.getElementById('menu-type-prime').value;
+            const primeVal = parseFloat(document.getElementById('menu-valeur-prime').value) || 0;
+        
+            const totalCost = selectedMenuIngredients.reduce((acc, curr) => acc + ((curr.prixUnitaire || 0) * curr.qty), 0);
+        
+            let computedPrime = 0;
+            if (primeType === "Fixe") computedPrime = primeVal;
+            else if (primeType === "Pourcentage") computedPrime = price * (primeVal / 100);
+        
+            const margin = price - totalCost - computedPrime;
+        
+            document.getElementById('menu-summary-cost').innerText = `${totalCost.toFixed(2)} $US`;
+            document.getElementById('menu-summary-prime').innerText = `${computedPrime.toFixed(2)} $US`;
+        
+            const marginElement = document.getElementById('menu-summary-margin');
+            marginElement.innerText = `${margin.toFixed(2)} $US`;
+        
+            if (margin >= 0) marginElement.className = "text-base font-black text-emerald-400";
+            else marginElement.className = "text-base font-black text-red-500";
+        }
+        
+        // Écouteurs pour mettre à jour les calculs en direct
+        document.getElementById('menu-prix').addEventListener('input', calculateMenuFinancials);
+        document.getElementById('menu-type-prime').addEventListener('change', calculateMenuFinancials);
+        document.getElementById('menu-valeur-prime').addEventListener('input', calculateMenuFinancials);
         
         // Initialisation globale
         async function init() {
