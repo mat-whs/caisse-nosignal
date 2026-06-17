@@ -785,25 +785,6 @@
             `).join('');
         }
 
-        document.getElementById('menu-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append('action', 'addMenu'); // Doit correspondre à ton Code.gs
-            formData.append('userId', sessionData.userId);
-            formData.append('data', JSON.stringify({
-                entrepriseId: activeCompanyId,
-                nom: document.getElementById('menu-name').value,
-                prix: document.getElementById('menu-price').value
-            }));
-        
-            const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
-            const result = await response.json();
-            if(result.success) {
-                loadMenus(); // Rafraîchit la liste
-                alert("Menu ajouté !");
-            }
-        });
-
         // Côté JS dans ton HTML
             async function loadMenus() {
                 const formData = new FormData();
