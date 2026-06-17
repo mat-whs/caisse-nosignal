@@ -443,7 +443,6 @@
         }
 
         function updateIngredientQty(id, newQty) {
-            const qty = parseInt(newQty, 10);
             const qty = parseFloat(newQty, 10);
             if (isNaN(qty) || qty <= 0) { 
                 removeIngredient(id); 
