@@ -232,15 +232,55 @@
                 </div>
             </div>
 
-            <div class="bg-[#111] border border-[#222] rounded-xl overflow-hidden">
-                <form id="menu-form" class="bg-[#222] p-4 rounded mt-4">
-                    <h3 class="text-white mb-2">Ajouter un Menu</h3>
-                    <input type="text" id="menu-name" placeholder="Nom du menu" class="w-full mb-2 p-2 rounded">
-                    <input type="number" id="menu-price" placeholder="Prix" class="w-full mb-2 p-2 rounded">
-                    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Enregistrer</button>
+            <div id="gestion-menus-section" class="management-section">
+                <h3>Gestion des Menus</h3>
+                
+                <form id="add-menu-form" class="management-form">
+                    <div class="form-group">
+                        <label for="menu-categorie">Catégorie :</label>
+                        <input type="text" id="menu-categorie" required placeholder="Ex: Formules, Combos...">
+                    </div>
+                    <div class="form-group">
+                        <label for="menu-nom">Nom du Menu :</label>
+                        <input type="text" id="menu-nom" required placeholder="Ex: Menu XL">
+                    </div>
+                    <div class="form-group">
+                        <label for="menu-composants">Composants :</label>
+                        <input type="text" id="menu-composants" placeholder="Ex: Poudre Cola:0.1, Gobelet:1">
+                    </div>
+                    <div class="form-group">
+                        <label for="menu-prix">Prix de Vente :</label>
+                        <input type="number" id="menu-prix" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="menu-type-prime">Type de Prime :</label>
+                        <select id="menu-type-prime">
+                            <option value="Fixe">Fixe</option>
+                            <option value="Pourcentage">Pourcentage</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="menu-valeur-prime">Valeur de la Prime :</label>
+                        <input type="number" id="menu-valeur-prime" step="0.01" value="0">
+                    </div>
+                    <button type="submit" class="btn-submit">Ajouter le Menu</button>
                 </form>
-    
-                <div id="menus-container"></div>
+            
+                <table id="menus-table" class="management-table">
+                    <thead>
+                        <tr>
+                            <th>Catégorie</th>
+                            <th>Nom du Menu</th>
+                            <th>Composants</th>
+                            <th>Prix de Vente</th>
+                            <th>Type Prime</th>
+                            <th>Valeur Prime</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menus-table-body">
+                        </tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -701,6 +741,103 @@
                     renderMenus(result.data); // Affiche la liste
                 }
             }
+
+        // Événement à la soumission du formulaire d'ajout
+        document.getElementById('add-menu-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const menuData = {
+                entrepriseId: activeCompanyId,
+                categorie: document.getElementById('menu-categorie').value,
+                nom: document.getElementById('menu-nom').value,
+                composants: document.getElementById('menu-composants').value,
+                prix: parseFloat(document.getElementById('menu-prix').value),
+                typePrime: document.getElementById('menu-type-prime').value,
+                valeurPrime: parseFloat(document.getElementById('menu-valeur-prime').value)
+            };
+        
+            const formData = new FormData();
+            formData.append('action', 'addMenu');
+            formData.append('userId', sessionData.userId);
+            formData.append('data', JSON.stringify(menuData));
+        
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    alert("Menu ajouté avec succès !");
+                    document.getElementById('add-menu-form').reset();
+                    await loadMenus(); // Rafraîchit le tableau
+                } else {
+                    alert("Erreur lors de l'ajout : " + result.message);
+                }
+            } catch (error) {
+                console.error("Erreur de communication :", error);
+            }
+        });
+        
+        // Fonction pour charger et récupérer les menus existants
+        async function loadMenus() {
+            const formData = new FormData();
+            formData.append('action', 'getMenus');
+            formData.append('userId', sessionData.userId);
+            formData.append('entrepriseId', activeCompanyId);
+        
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    renderMenus(result.data);
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement des menus :", error);
+            }
+        }
+        
+        // Fonction pour injecter les lignes dans le tableau HTML
+        function renderMenus(menus) {
+            const tbody = document.getElementById('menus-table-body');
+            tbody.innerHTML = ''; 
+        
+            menus.forEach(menu => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${menu.categorie || ''}</td>
+                    <td>${menu.nom || ''}</td>
+                    <td>${menu.composants || ''}</td>
+                    <td>${menu.prix || 0} €</td>
+                    <td>${menu.typePrime || ''}</td>
+                    <td>${menu.valeurPrime || 0}</td>
+                    <td>
+                        <button class="btn-delete" onclick="deleteMenuUI('${menu.id}')">Supprimer</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Fonction pour déclencher la suppression d'un menu
+        async function deleteMenuUI(menuId) {
+            if (!confirm("Voulez-vous vraiment supprimer ce menu ?")) return;
+        
+            const formData = new FormData();
+            formData.append('action', 'deleteMenu');
+            formData.append('userId', sessionData.userId);
+            formData.append('data', JSON.stringify({ id: menuId }));
+        
+            try {
+                const response = await fetch(CONFIG.API_URL, { method: "POST", body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    alert("Menu supprimé !");
+                    await loadMenus();
+                } else {
+                    alert("Erreur lors de la suppression : " + result.message);
+                }
+            } catch (error) {
+                console.error("Erreur de communication :", error);
+            }
+        }
         
         // Initialisation globale
         async function init() {
