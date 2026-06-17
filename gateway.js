@@ -31,7 +31,7 @@ const CONFIG = {
     document.write(`<meta charset="UTF-8">`);
     document.write(`<meta name="viewport" content="width=device-width, initial-scale=1.0">`);
     document.write(`<title>Caisse.NoSignal - ${isDashboardPage ? 'Dashboard' : 'Connexion'}</title>`);
-    document.write(`<link rel="stylesheet" href="${relPath}style.css">`);
+    document.write(`<link rel="stylesheet" href="/caisse-nosignal/style.css">`);
     // Note : Le script Tailwind provoque l'avertissement console, mais il fonctionnera tant que le réseau suit.
     document.write(`<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>`);
 })();
